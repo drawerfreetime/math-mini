@@ -1,0 +1,141 @@
+/* 미리보기 안내 — HUD 글로우와 맞춘 흰색→하늘색 그라데이션 외곽 */
+.exam-pdf-placement-hint {
+  position: relative;
+  display: inline-block;
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.45;
+  vertical-align: middle;
+}
+
+.exam-pdf-placement-hint__stroke,
+.exam-pdf-placement-hint__fill {
+  display: block;
+}
+
+.exam-pdf-placement-hint__stroke {
+  position: absolute;
+  left: 0;
+  top: 0;
+  right: 0;
+  z-index: 0;
+  color: transparent;
+  pointer-events: none;
+  user-select: none;
+  background: linear-gradient(
+    118deg,
+    #ffffff 0%,
+    #f5fbff 20%,
+    var(--hud-frame-bright, #b8ecff) 45%,
+    #ffffff 62%,
+    #d6f1fd 82%,
+    #ffffff 100%
+  );
+  background-size: 220% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  text-shadow:
+    0 0 2px rgba(255, 255, 255, 0.98),
+    0 0 5px rgba(245, 251, 255, 0.92),
+    0 0 9px rgba(184, 236, 255, 0.72),
+    0 0 14px rgba(214, 241, 253, 0.45),
+    -1px -1px 0 #ffffff,
+    0 -1px 0 #f5fbff,
+    1px -1px 0 #e8f7ff,
+    1px 0 0 #b8ecff,
+    1px 1px 0 #ffffff,
+    0 1px 0 #d6f1fd,
+    -1px 1px 0 #b8ecff,
+    -1px 0 0 #f0f9ff,
+    -2px 0 0 rgba(255, 255, 255, 0.88),
+    2px 0 0 rgba(184, 236, 255, 0.82),
+    0 -2px 0 rgba(255, 255, 255, 0.92),
+    0 2px 0 rgba(214, 241, 253, 0.8);
+  filter:
+    drop-shadow(0 0 2px rgba(255, 255, 255, 0.9))
+    drop-shadow(0 0 6px rgba(184, 236, 255, 0.55))
+    drop-shadow(0 0 12px rgba(62, 185, 255, 0.22));
+}
+
+.exam-pdf-placement-hint__fill {
+  position: relative;
+  z-index: 1;
+  color: #db3232;
+}
+
+/* 칸 이동 안내 — 글자 13px(placement-hint), 색 gray-700(form-label), 외곽 placement-hint 동일 */
+.exam-pdf-field-move-hint {
+  position: relative;
+  display: block;
+  flex: 1 1 200px;
+  min-width: 200px;
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.45;
+  padding-bottom: 2;
+}
+
+.exam-pdf-field-move-hint__stroke {
+  position: absolute;
+  left: 0;
+  top: 0;
+  right: 0;
+  z-index: 0;
+  color: transparent;
+  pointer-events: none;
+  user-select: none;
+  background: linear-gradient(
+    118deg,
+    #ffffff 0%,
+    #f5fbff 20%,
+    var(--hud-frame-bright, #b8ecff) 45%,
+    #ffffff 62%,
+    #d6f1fd 82%,
+    #ffffff 100%
+  );
+  background-size: 220% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  text-shadow:
+    0 0 2px rgba(255, 255, 255, 0.98),
+    0 0 5px rgba(245, 251, 255, 0.92),
+    0 0 9px rgba(184, 236, 255, 0.72),
+    0 0 14px rgba(214, 241, 253, 0.45),
+    -1px -1px 0 #ffffff,
+    0 -1px 0 #f5fbff,
+    1px -1px 0 #e8f7ff,
+    1px 0 0 #b8ecff,
+    1px 1px 0 #ffffff,
+    0 1px 0 #d6f1fd,
+    -1px 1px 0 #b8ecff,
+    -1px 0 0 #f0f9ff,
+    -2px 0 0 rgba(255, 255, 255, 0.88),
+    2px 0 0 rgba(184, 236, 255, 0.82),
+    0 -2px 0 rgba(255, 255, 255, 0.92),
+    0 2px 0 rgba(214, 241, 253, 0.8);
+  filter:
+    drop-shadow(0 0 2px rgba(255, 255, 255, 0.9))
+    drop-shadow(0 0 6px rgba(184, 236, 255, 0.55))
+    drop-shadow(0 0 12px rgba(62, 185, 255, 0.22));
+}
+
+.exam-pdf-field-move-hint__fill {
+  position: relative;
+  z-index: 1;
+  color: var(--gray-700, #334155);
+}
+
+.exam-pdf-field-move-hint__grid {
+  display: grid;
+  grid-template-columns: max-content max-content minmax(0, 1fr);
+  column-gap: 0.35em;
+  row-gap: 0.1em;
+  align-items: baseline;
+}
+
+.exam-pdf-field-move-hint__num {
+  text-align: right;
+  min-width: 1.15em;
+}

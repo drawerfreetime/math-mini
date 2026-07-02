@@ -1,0 +1,61 @@
+{
+  "name": "math-app",
+  "version": "1.0.0",
+  "private": true,
+  "dependencies": {
+    "@dnd-kit/core": "^6.3.1",
+    "@dnd-kit/sortable": "^10.0.0",
+    "@dnd-kit/utilities": "^3.2.2",
+    "@phosphor-icons/react": "^2.1.10",
+    "firebase": "^10.8.0",
+    "katex": "^0.16.45",
+    "lucide-react": "^1.22.0",
+    "mathlive": "^0.109.2",
+    "pdf-fontkit": "^1.8.9",
+    "pdf-lib": "^1.17.1",
+    "pdfjs-dist": "3.11.174",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "react-katex": "^3.1.0",
+    "react-markdown": "^9.0.1",
+    "react-router-dom": "^6.22.0",
+    "react-scripts": "5.0.1",
+    "remark-gfm": "^4.0.0"
+  },
+  "scripts": {
+    "prestart": "node scripts/sync-public-docs.mjs && node scripts/sync-pdfjs-assets.mjs",
+    "prebuild": "node scripts/sync-public-docs.mjs && node scripts/sync-pdfjs-assets.mjs",
+    "postinstall": "node scripts/sync-pdfjs-assets.mjs",
+    "start": "react-scripts start",
+    "build": "react-scripts build",
+    "build:firebase": "node scripts/build-for-firebase.mjs",
+    "deploy:vercel": "vercel deploy --prod --yes",
+    "deploy:firebase": "npm run build:firebase && firebase deploy --only hosting",
+    "admin:keep-class": "node scripts/admin-keep-single-class.mjs",
+    "admin:reset-scan-lastactive": "node scripts/admin-reset-scan-lastactive.mjs",
+    "admin:backfill-exploration-points": "node scripts/admin-backfill-exploration-points.mjs",
+    "admin:backfill-exploration-client": "node scripts/run-exploration-backfill-client.mjs",
+    "admin:backfill-exploration-cli": "node scripts/run-exploration-backfill-cli.mjs",
+    "admin:backfill-exploration-points:cli": "node scripts/admin-backfill-exploration-points.mjs --use-cli-auth"
+  },
+  "devDependencies": {
+    "firebase-admin": "^12.7.0"
+  },
+  "eslintConfig": {
+    "extends": [
+      "react-app"
+    ]
+  },
+  "browserslist": {
+    "production": [
+      ">0.2%",
+      "not dead",
+      "not op_mini all"
+    ],
+    "development": [
+      "last 1 chrome version",
+      "last 1 firefox version",
+      "last 1 safari version"
+    ]
+  }
+}

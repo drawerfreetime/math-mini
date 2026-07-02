@@ -1,0 +1,48 @@
+{
+  "indexes": [
+    {
+      "collectionGroup": "variantReviews",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "studentUUID", "order": "ASCENDING" },
+        { "fieldPath": "status", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "variantReviews",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "classCode", "order": "ASCENDING" },
+        { "fieldPath": "status", "order": "ASCENDING" },
+        { "fieldPath": "createdAt", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "wrongNoteReviews",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "classCode", "order": "ASCENDING" },
+        { "fieldPath": "status", "order": "ASCENDING" },
+        { "fieldPath": "createdAt", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "users",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "role", "order": "ASCENDING" },
+        { "fieldPath": "schoolName", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "variantEvaluations",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "classCode", "order": "ASCENDING" },
+        { "fieldPath": "problemId", "order": "ASCENDING" }
+      ]
+    }
+  ],
+  "fieldOverrides": []
+}
+

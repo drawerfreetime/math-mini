@@ -1,0 +1,51 @@
+---
+description: 도형·그래프 렌더링 원칙 — SVG/Konva + JSON 수치 기반
+alwaysApply: true
+---
+
+# 도형·그래프 렌더링 규칙
+
+## 핵심 원칙
+AI는 도형을 직접 그리지 않는다. **수치(JSON) → 렌더러(SVG 또는 React-Konva)** 파이프라인만 사용한다.
+
+## 데이터 구조 (JSON)
+
+모든 도형은 다음 형태의 JSON으로 정의한다:
+
+```json
+{
+  "type": "polygon",          // rect | circle | polygon | line | arrow
+  "points": [[0,0],[4,0],[4,3],[0,3]],  // 격자 좌표 (단위: 칸)
+  "fill": "#dbeafe",
+  "stroke": "#3b82f6",
+  "label": "직사각형",
+  "editable": true            // 학생이 드래그/수치 변경 가능 여부
+}
+```
+
+## 렌더러 선택 기준
+
+| 상황 | 렌더러 |
+|------|--------|
+| 정적 문제 표시, 인쇄 | SVG |
+| 드래그·변형·애니메이션 | React-Konva |
+
+## 좌표 계산 규칙
+
+- 모든 좌표는 **격자(Grid) 기반** — 임의 픽셀값 금지
+- 격자 1칸 = `GRID_SIZE` 픽셀 (기본 40px), 비율 보존
+- 소수점 좌표는 반드시 `Math.round(x / GRID_SIZE) * GRID_SIZE` 로 스냅
+
+```js
+// ✅ GOOD — 격자 스냅
+const snapped = { x: Math.round(raw.x / GRID) * GRID, y: Math.round(raw.y / GRID) * GRID };
+
+// ❌ BAD — 픽셀 하드코딩
+const shape = { x: 137, y: 284 };
+```
+
+## 편집 가능 상태
+
+- 모든 문제 도형은 `editable: true` 속성을 가져야 한다
+- 학생은 꼭짓점 드래그 또는 수치 입력 필드로 도형을 변형할 수 있어야 한다
+- 변형 결과는 즉시 JSON에 반영되어 재렌더링된다

@@ -1,0 +1,28 @@
+---
+description: 문제 만들기(6전략) 가이드·평가 수정 시 대전제 — 문항별이 아닌 일반화
+alwaysApply: true
+---
+
+# 변형 전략 가이드 — 일반화 대전제
+
+연구원용 AI가이드·교사 심사(적합/부족) 규칙을 손볼 때 **항상** 이 전제를 따른다. 사용자가 매번 “일반화해”라고 말하지 않아도 적용한다.
+
+## 하지 말 것
+
+- 특정 문항·숫자·식 패턴에만 맞는 프롬프트·예시·보정 로직 (예: 47×4, 63×□, 630×□0, 188, 도서관 책장 등)
+- 문항 유형마다 `if` / 별도 `EVAL_NOTE` 블록을 늘리는 방식
+- “이 문항에서는 fit”처럼 사례에 묶인 평가 기준
+
+## 할 것
+
+- **6가지 바꾸기**의 `[이 방법이 하는 일]`(`STRATEGY_MECHANISM`)과 **전 문항 공통 규칙**만으로 생성·평가·재생성
+- 판정·보정·프롬프트는 **원칙**으로 쓴다 (정답 노출 = □·답 칸 **안** 수를 직접 적었을 때, 5항 = 선택 전략과 가이드만 대조, “지금 문제와 비교하면 알 수 있다”만으로 부족 아님 등)
+- 문항·단원이 바뀌어도 같은 코드·같은 프롬프트가 동작해야 한다
+
+## 수정 시 우선 파일
+
+- `backend/teacher_guide_eval_core.py` — 생성·평가·사전검사·merge 보정의 단일 소스
+- `backend/server.py` — `/api/evaluate-teacher-guide`, variant-strategy-guide, revise API
+- `src/utils/evaluateTeacherGuide.js`, `reviseTeacherGuide.js`, `src/constants/variantStrategies.js`
+
+새 예외가 필요하면: 먼저 `STRATEGY_MECHANISM`·`TEACHER_GUIDE_EVAL_ALIGNMENT_PRINCIPLES`에 **일반 문장**으로 넣고, 정말 필요할 때만 `_rationale_contradicts_selected_strategy` 같은 **전략·주장 유형** 기반 보정을 추가한다.

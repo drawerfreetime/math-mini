@@ -1,0 +1,39 @@
+# 로컬 전용 서비스 계정 (Firestore 관리 스크립트용 — 저장소에 올리지 마세요)
+.firebase-admin-sa.json
+
+# env / secrets (절대 커밋 금지)
+.env
+.env.*
+*key*.txt
+*api_key*.txt
+*apikey*.txt
+
+# Node
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# CRA build artifacts
+build/
+
+# docs/*.md → prestart/prebuild 시 복사
+public/docs/privacy-policy.md
+public/docs/terms-of-service.md
+
+# Scan organize — 로컬 수동 디버깅용 크롭 PNG (저장소·푸시 제외)
+backend/data/_scan_debug/
+
+# Python
+__pycache__/
+*.pyc
+.pytest_cache/
+.venv/
+venv/
+backend/venv/
+
+# OS / editor
+.DS_Store
+Thumbs.db
+
+.vercel

@@ -1,0 +1,7 @@
+# "..." keeps Nixpacks Python provider defaults (/opt/venv + pip on PATH).
+# gcc is needed for native wheels (opencv, numpy).
+[phases.setup]
+nixPkgs = ["...", "gcc"]
+
+[start]
+cmd = "uvicorn server:app --host 0.0.0.0 --port $PORT"
