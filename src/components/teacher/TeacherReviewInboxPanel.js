@@ -195,90 +195,7 @@ function VariantReviewCard({
   );
 }
 
-function VariantDiagnosticsPanel({ variantDiag }) {
-  if (!variantDiag) return null;
-  const s = variantDiag.summary || {};
-  const queryCount = s.queryResults
-    ? Object.values(s.queryResults).reduce((n, r) => n + (r?.count || 0), 0)
-    : null;
-  return (
-    <div style={{
-      background: '#f1f5f9',
-      border: '1px solid #cbd5e1',
-      borderRadius: 10,
-      padding: '10px 14px',
-      fontSize: 12,
-      color: '#0f172a',
-      marginBottom: 12,
-    }}>
-      {variantDiag.phase === 'running' ? (
-        <div>진단 중… (학생 problemBank에서 reviewId 수집 → variantReviews 존재/권한 확인)</div>
-      ) : variantDiag.phase === 'error' ? (
-        <div style={{ color: '#b91c1c' }}>진단 오류: {variantDiag.message}</div>
-      ) : (
-        <>
-          <div style={{ fontWeight: 800, marginBottom: 6 }}>진단 결과</div>
-          {s.classProblemBankCount != null && queryCount != null && s.classProblemBankCount > queryCount && (
-            <div style={{
-              marginBottom: 8, padding: '8px 10px', borderRadius: 8,
-              background: '#fff7ed', border: '1px solid #fdba74', color: '#9a3412', lineHeight: 1.5,
-            }}>
-              학급 problemBank <strong>{s.classProblemBankCount}건</strong>인데 검수함 쿼리는{' '}
-              <strong>{queryCount}건</strong>입니다.
-              학급 등록만 되고 <code>variantReviews</code> 검수 문서가 없는 경우가 많습니다.
-              아래 <strong>「검수 문서 백필」</strong>을 눌러 주세요.
-            </div>
-          )}
-          <div style={{ fontFamily: 'monospace', lineHeight: 1.6 }}>
-            <div>serverStudentsCount: {s.serverStudentsCount}</div>
-            <div>classProblemBankCount: {s.classProblemBankCount ?? '(미집계)'}</div>
-            <div>studentCounts(by classCode, limit 5): {JSON.stringify(s.studentCounts)}</div>
-            <div>problemBankDocCount(sampled): {s.problemBankDocCount}</div>
-            <div>foundInProblemBank: {s.foundInProblemBank}</div>
-            <div>uniqueReviewIds: {s.uniqueReviewIds}</div>
-            <div>variantReviews.exists (읽기 성공): {s.existsCount}</div>
-            <div>variantReviews.missing (NOT_FOUND): {s.missingCount}</div>
-            <div>variantReviews.likelyMissing (permission-denied): {s.likelyMissingReviews ?? s.deniedCount}</div>
-            <div>otherErrors: {s.errorCount}</div>
-            {variantDiag.summary.queryResults && (
-              <div style={{ marginTop: 6, padding: '6px 8px', background: '#f0f9ff', borderRadius: 6 }}>
-                <div style={{ fontWeight: 700, marginBottom: 2 }}>실제 쿼리 결과 (classCode별)</div>
-                {Object.entries(variantDiag.summary.queryResults).map(([cc, r]) => (
-                  <div key={cc}>
-                    [{cc}] → {r.error ? `오류: ${r.error}` : `${r.count}건`}
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-          <p style={{ margin: '8px 0 0', fontSize: 11, color: '#64748b', lineHeight: 1.5 }}>
-            Firestore는 문서가 없으면 <code>permission-denied</code>로 보일 수 있습니다.
-            likelyMissing 수치가 크면 검수 문서가 아직 생성되지 않은 것입니다.
-          </p>
-          {Array.isArray(variantDiag.sampleChecks) && variantDiag.sampleChecks.length > 0 && (
-            <div style={{ marginTop: 8 }}>
-              <div style={{ fontWeight: 700, marginBottom: 4 }}>샘플 (최대 8개)</div>
-              <div style={{ fontFamily: 'monospace', whiteSpace: 'pre-wrap' }}>
-                {variantDiag.sampleChecks.map((c) => (
-                  <div key={c.reviewId}>
-                    - {c.reviewId}:{' '}
-                    {c.ok
-                      ? (c.exists
-                        ? `OK (classCode=${c.vrClassCode || '?'}, status=${c.vrStatus || '?'})`
-                        : 'NOT_FOUND')
-                      : (c.code === 'permission-denied'
-                        ? 'NO_DOC (permission-denied — 검수 문서 없음)'
-                        : `ERR (${c.code || ''})`)}
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-        </>
-      )}
-    </div>
-  );
-}
+
 
 function WrongNoteReviewCard({
   item,
@@ -478,43 +395,6 @@ export default function TeacherReviewInboxPanel({
       <div className="section-header">
         <h2 className="section-title">📥 검수함</h2>
         <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', justifyContent: 'flex-end' }}>
-          {showVariantTools && (
-            <>
-              <button type="button" className="btn btn-outline btn-sm" onClick={onRunVariantDiagnostics} disabled={variantReviewsLoading || !serverStudents.length}>
-                🩺 진단
-              </button>
-              <button
-                type="button"
-                className="btn btn-outline btn-sm"
-                onClick={onMigrateLegacyPendingStatuses}
-                disabled={legacyPendingMigrationState === 'running' || variantReviewsLoading || !serverStudents.length}
-                title="옛 배포본에서 status=pending 으로 남은 검수 문서를 pending_review 로 정리합니다. (검수함 누락 방지)"
-              >
-                {legacyPendingMigrationState === 'running' ? '⏳ pending 정리…' : '🧹 pending 정리'}
-              </button>
-              <button
-                type="button"
-                className="btn btn-outline btn-sm"
-                onClick={onRerunClassProblemAiReviews}
-                disabled={classAiRerunLoading || variantBackfillLoading || variantReviewsLoading || !serverStudents.length}
-                title="검수함·학급 문제은행의 AI 미검수/오류 항목(새 문제 포함)을 다시 검수합니다. 백엔드(8002)가 켜져 있어야 합니다."
-              >
-                {classAiRerunLoading ? <><span className="spinner" /> AI 재검수 중...</> : '검수함 AI 재검수(미완료·새 문제)'}
-              </button>
-              <button
-                type="button"
-                className="btn btn-primary btn-sm"
-                onClick={onBackfillVariantReviews}
-                disabled={variantBackfillLoading || classAiRerunLoading || variantReviewsLoading || !serverStudents.length}
-                title="학급 problemBank에는 있는데 variantReviews 검수 문서가 없는 항목을 생성합니다. 생성 후 AI 미검수 건은 자동 재검수합니다."
-              >
-                {variantBackfillLoading ? <><span className="spinner" /> 백필 중...</> : '📥 검수 문서 백필'}
-              </button>
-              <button type="button" className="btn btn-outline btn-sm" onClick={onMigrateVariantClassCode} disabled={migrationState === 'running' || !serverStudents.length}>
-                {migrationState === 'running' ? '⏳ 마이그레이션…' : '🔧 classCode 수정'}
-              </button>
-            </>
-          )}
           <button type="button" className="btn btn-outline btn-sm" onClick={() => { onRefreshVariants(); onRefreshWrongNotes(); }} disabled={loading}>
             🔄 새로고침
           </button>
@@ -528,9 +408,7 @@ export default function TeacherReviewInboxPanel({
 
       <InboxFilters filter={filter} counts={counts} onChange={onFilterChange} />
 
-      {showVariantTools && (
-        <VariantDiagnosticsPanel variantDiag={variantDiag} />
-      )}
+
 
       {loading ? (
         <div className="loading-box"><div className="spinner-large" /><p>검수 목록 로드 중...</p></div>

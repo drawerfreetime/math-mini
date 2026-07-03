@@ -2326,68 +2326,15 @@ export default function TeacherDashboard() {
                 padding: '2px 8px', borderRadius: 6, fontSize: 13, color: '#4f46e5' }}>
                 학급코드: {classCode}
               </span>
-              <button
-                type="button"
-                className="btn btn-outline btn-xs"
-                style={{ marginLeft: 8, fontSize: 12, padding: '2px 8px' }}
-                onClick={() => { setShowMigrateModal(true); setMigrateSummary(null); }}
-                title="기존 학급 데이터를 새 코드로 이관"
-              >
-                학급코드 이관
-              </button>
-              <button
-                type="button"
-                className="btn btn-ghost btn-xs"
-                style={{ marginLeft: 8, fontSize: 12, padding: '2px 8px' }}
-                onClick={() => setDebugEnvOpen((v) => !v)}
-                title="Firebase 연결 상태(디버그)"
-              >
-                {debugEnvOpen ? '디버그 닫기' : '디버그 보기'}
               </button>
             </p>
-            {debugEnvOpen && (
-              <div style={{
-                marginTop: 8,
-                fontSize: 12,
-                color: '#475569',
-                background: '#f8fafc',
-                border: '1px solid #e2e8f0',
-                borderRadius: 10,
-                padding: '8px 10px',
-                maxWidth: 720,
-              }}>
-                <div style={{ fontFamily: 'monospace' }}>
-                  <div>firebase.projectId(env): {process.env.REACT_APP_FIREBASE_PROJECT_ID || '(없음)'}</div>
-                  <div>firebase.projectId(app): {app?.options?.projectId || '(없음)'}</div>
-                  <div>auth.uid: {teacherUser?.uid || '(미로그인)'}</div>
-                  <div>auth.email: {teacherUser?.email || '(없음)'}</div>
-                  <div>classCode(state): {classCode || '(없음)'}</div>
-                </div>
-                <div style={{ marginTop: 6, color: '#64748b', lineHeight: 1.5 }}>
-                  위의 projectId가 Vercel/localhost에서 다르면 서로 다른 Firebase를 보고 있는 상태입니다.
-                </div>
-              </div>
-            )}
+            </p>
           </div>
         </div>
         <div className="header-right">
           <span className="user-badge teacher-badge">교사</span>
           <span className="user-name" style={{ fontSize: 13 }}>{teacherUser?.email}</span>
-          <button
-            type="button"
-            className="btn btn-outline btn-sm"
-            onClick={() => {
-              localStorage.removeItem('teacher_class_code');
-              setClassCode(null);
-              setClassInfo(null);
-              setLocalMappings([]);
-              setRosterSynced(false);
-              setActiveTab('home');
-            }}
-            title="학급 선택 화면으로 돌아가기"
-          >
-            학급 변경
-          </button>
+          <span className="user-name" style={{ fontSize: 13 }}>{teacherUser?.email}</span>
           <button className="btn btn-outline btn-sm"
             onClick={() => { teacherLogout(); navigate('/'); }}>
             로그아웃
@@ -2403,62 +2350,6 @@ export default function TeacherDashboard() {
         {toast && (
           <div className={`alert ${toast.type === 'error' ? 'alert-error' : 'alert-success'}`}>
             {toast.type === 'error' ? '⚠️' : '✅'} {toast.msg}
-          </div>
-        )}
-
-        {migrateSummary && (
-          <div className="info-banner" style={{ marginBottom: 12 }}>
-            <span className="info-banner-icon">🔁</span>
-            <div style={{ fontSize: 13, lineHeight: 1.5 }}>
-              <strong>학급코드 이관 요약</strong><br />
-              Firestore: students {migrateSummary?.res?.updated?.students ?? 0}명 ·
-              problemBank {migrateSummary?.res?.copied?.problemBank ?? 0}건 ·
-              variantReviews {migrateSummary?.res?.updated?.variantReviews ?? 0}건<br />
-              로컬(교사 기기): 매핑 {migrateSummary?.localRes?.migratedMappings ?? 0}건
-            </div>
-          </div>
-        )}
-
-        {showMigrateModal && (
-          <div className="modal-overlay" onClick={() => !migrating && setShowMigrateModal(false)}>
-            <div className="modal" style={{ maxWidth: 520 }} onClick={(ev) => ev.stopPropagation()}>
-              <div className="modal-header">
-                <h3>학급코드 이관</h3>
-                <button className="modal-close" onClick={() => !migrating && setShowMigrateModal(false)}>×</button>
-              </div>
-              <div className="modal-body">
-                <div style={{ fontSize: 13, color: '#475569', lineHeight: 1.6 }}>
-                  기존 학급코드 <strong style={{ fontFamily: 'monospace' }}>{classCode}</strong>의 데이터를
-                  새 학급코드로 복사하고, 학생/검수 데이터의 <code>classCode</code> 참조도 함께 갱신합니다.
-                  <br />
-                  새 코드에는 <strong>U / S / 2</strong>를 사용할 수 없습니다.
-                </div>
-                <form onSubmit={handleMigrateClassCode} style={{ marginTop: 14 }}>
-                  <div className="form-group">
-                    <label className="form-label">새 학급 코드</label>
-                    <input
-                      type="text"
-                      className="form-input"
-                      placeholder="예: PVT3R9"
-                      value={migrateToCode}
-                      onChange={(e) => setMigrateToCode(e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 8))}
-                      style={{ fontFamily: 'monospace', letterSpacing: 2, textTransform: 'uppercase' }}
-                      required
-                      disabled={migrating}
-                    />
-                    {migrateToCode && isDisallowedForNewCode(migrateToCode) && (
-                      <p style={{ marginTop: 6, fontSize: 12, color: '#dc2626' }}>
-                        ⚠️ 새 학급코드에는 U/S/2를 넣을 수 없습니다.
-                      </p>
-                    )}
-                  </div>
-                  <button type="submit" className="btn btn-primary" style={{ width: '100%' }}
-                    disabled={migrating || !migrateToCode || isDisallowedForNewCode(migrateToCode)}>
-                    {migrating ? <><span className="spinner" /> 이관 중...</> : '이관 실행'}
-                  </button>
-                </form>
-              </div>
-            </div>
           </div>
         )}
 
@@ -2637,14 +2528,6 @@ export default function TeacherDashboard() {
             onShowExportModal={() => setShowExportModal(true)}
             onShowImportModal={() => setShowImportModal(true)}
             onShowPurgeModal={() => setShowPurgeModal(true)}
-            geminiKeyInput={geminiKeyInput}
-            geminiKeyRevealed={geminiKeyRevealed}
-            geminiKeySaving={geminiKeySaving}
-            teacherProfile={teacherProfile}
-            onGeminiKeyInputChange={setGeminiKeyInput}
-            onToggleGeminiKeyReveal={() => setGeminiKeyRevealed((v) => !v)}
-            onSaveGeminiKey={handleSaveGeminiKey}
-            onClearGeminiKey={() => setGeminiKeyInput('')}
           />
         )}
 
