@@ -102,7 +102,7 @@ export function calcStudentLevel(totalSolved) {
 
 export function getOtterImageSrc(viewLevel, locked) {
 
-  const suffix = locked ? '-hide' : '';
+  const suffix = (locked || viewLevel >= 2) ? '-hide' : '';
 
   return `${CHARACTER_IMAGE_BASE}/otter-${viewLevel}${suffix}.png`;
 

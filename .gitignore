@@ -26,3 +26,12 @@ public/docs/terms-of-service.md
 Thumbs.db
 
 .vercel
+
+# 관리자 및 백엔드 로직 제외
+scripts/admin*.mjs
+firestore.rules
+firestore.indexes.json
+
+# 실제 구현 로직 백업 파일 (절대 공개 금지)
+**/*.secret.js
+**/*.secret.css
