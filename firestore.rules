@@ -1,0 +1,825 @@
+// ============================================================
+// Firestore 보안 규칙 — Privacy by Design
+//
+// ★ 핵심 보안 원칙 ★
+// 1. 학생 실명은 Firestore에 존재하지 않으므로 규칙 수준의 보호 불필요
+// 2. 학생 문서(students/{uuid}): 익명 학생은 본인 anonUID 로만 수정
+//    비익명(교사)은 해당 학급(classes) 소유 교사만,
+//    studentNumber·pinHash·examResults·lastActive 변경만 허용
+// 3. 교사 문서(classes, teachers): 인증된 교사만 접근 (classes 세부 검증은 별도 과제 가능)
+// 4. 학생의 퀴즈 결과: 본인 anonUID 로만 쓰기
+// ============================================================
+
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ────────────────────────────────────────
+    // 헬퍼 함수
+    // ────────────────────────────────────────
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isAnonymous() {
+      return request.auth != null && request.auth.token.firebase.sign_in_provider == 'anonymous';
+    }
+
+    /** 이메일·구글 등 (교사 로그인) */
+    function isNamedUser() {
+      return request.auth != null && request.auth.token.firebase.sign_in_provider != 'anonymous';
+    }
+
+    /** Auth 이메일 — teacherEmails 과 비교 시 소문자·양끝 공백 제거 (.lower()은 문자열 메서드이며 전역 lower() 없음) */
+    function authEmailNormalized() {
+      return request.auth != null && request.auth.token.email != null
+        ? request.auth.token.email.trim().lower()
+        : '';
+    }
+
+    /** classes/{docId} 문서에 교사 소유 확인 */
+    function teacherListedOnClassDoc(classSnap) {
+      let d = classSnap.data;
+      return ('teacherUID' in d && d.teacherUID == request.auth.uid)
+        || (
+          authEmailNormalized() != ''
+          && ('teacherEmails' in d)
+          && authEmailNormalized() in d.teacherEmails
+        );
+    }
+
+    function teacherOwnsStudentClass(studentClassCode) {
+      let cc = studentClassCode;
+      let ccUp = cc.upper();
+      return cc is string
+        && (
+          (exists(/databases/$(database)/documents/classes/$(cc))
+            && teacherListedOnClassDoc(get(/databases/$(database)/documents/classes/$(cc))))
+          || (exists(/databases/$(database)/documents/classes/$(ccUp))
+            && teacherListedOnClassDoc(get(/databases/$(database)/documents/classes/$(ccUp))))
+        );
+    }
+
+    /** variantReviews 문서(읽기·갱신)의 classCode 학급을 현재 교사가 담당하는지
+     *  ★ 소문자·대문자 classCode 혼용 대비: cc와 cc.upper() 둘 다 확인 */
+    function teacherOwnsVariantReviewClassFromData(data) {
+      let cc = data.classCode;
+      let ccUp = cc.upper();
+      return cc is string
+        && (
+          (exists(/databases/$(database)/documents/classes/$(cc))
+            && teacherListedOnClassDoc(get(/databases/$(database)/documents/classes/$(cc))))
+          || (exists(/databases/$(database)/documents/classes/$(ccUp))
+            && teacherListedOnClassDoc(get(/databases/$(database)/documents/classes/$(ccUp))))
+        );
+    }
+
+    /** variantReviews 문서의 studentUUID가 교사 담당 학생인지 확인
+     *  ★ 학급 이관 후 classCode가 구버전으로 남아 있어도 읽기/수정 허용 */
+    function teacherOwnsStudentInVariantReview(data) {
+      let su = data.studentUUID;
+      return su is string
+        && exists(/databases/$(database)/documents/students/$(su))
+        && teacherOwnsStudentClass(
+            get(/databases/$(database)/documents/students/$(su)).data.classCode);
+    }
+
+    /** 익명 학생이 자신의 UUID로 variantReviews 문서를 생성하는지
+     *  ★ classCode 는 세션 캐시(학급 이관 전)와 Firestore 불일치 가능 → anonUID 소유만 확인 */
+    function studentCreatesOwnVariantReview() {
+      let su = request.resource.data.studentUUID;
+      let studentDoc = get(/databases/$(database)/documents/students/$(su)).data;
+      return isAnonymous()
+        && su is string
+        && exists(/databases/$(database)/documents/students/$(su))
+        && studentDoc.anonUID == request.auth.uid;
+    }
+
+    /** wrongNoteReviews — variantReviews 와 동일한 학급·학생 소유 검증 */
+    function studentCreatesOwnWrongNoteReview() {
+      return studentCreatesOwnVariantReview();
+    }
+
+    /** 익명 학생이 students/{studentUUID} 문서의 소유자인지 */
+    function studentOwnsStudentDoc(studentUUID) {
+      return isAnonymous()
+        && exists(/databases/$(database)/documents/students/$(studentUUID))
+        && get(/databases/$(database)/documents/students/$(studentUUID)).data.anonUID == request.auth.uid;
+    }
+
+    /** variantReviews — 학생이 수정·재제출할 수 있는 상태 */
+    function variantReviewAwaitingDecision() {
+      let st = resource.data.status;
+      return st == 'pending_review' || st == 'peer_review' || st == 'pending' || st == 'rejected';
+    }
+
+    /** 학생이 본인 검수 대기 변형 문제 제출을 철회(삭제)하는지 */
+    function studentDeletesOwnPendingVariantReview() {
+      return studentOwnsStudentDoc(resource.data.studentUUID)
+        && variantReviewAwaitingDecision();
+    }
+
+    /** 교사가 담당 학급 검수 제출을 개발·테스트 정리 목적으로 삭제하는지 */
+    function teacherDeletesOwnClassReviewSubmission() {
+      return isNamedUser() && (
+        teacherOwnsVariantReviewClassFromData(resource.data)
+        || teacherOwnsStudentInVariantReview(resource.data)
+      );
+    }
+
+    /** 익명 학생이 본인 variantReviews 문서를 재제출(갱신)하는지 */
+    function studentUpdatesOwnPendingVariantReview() {
+      let su = resource.data.studentUUID;
+      return isAnonymous()
+        && su is string
+        && request.resource.data.studentUUID == su
+        && studentOwnsStudentDoc(su)
+        && variantReviewAwaitingDecision()
+        && request.resource.data.classCode == resource.data.classCode;
+    }
+
+    /** variantReviews — 백그라운드 AI 검수 결과만 갱신 */
+    function studentUpdatesOwnVariantReviewAi() {
+      let su = resource.data.studentUUID;
+      let allowed = [
+        'aiNote', 'aiMode', 'aiApproved', 'aiChecks', 'aiCompletionLevel',
+        'aiReviewStatus', 'status', 'updatedAt', 'classProblemId', 'classProblemLabel',
+        'peerApprovals', 'peerApprovalRequired',
+      ];
+      let d = request.resource.data.diff(resource.data);
+      return isAnonymous()
+        && su is string
+        && studentOwnsStudentDoc(su)
+        && d.addedKeys().hasOnly(allowed)
+        && d.changedKeys().hasOnly(allowed)
+        && d.removedKeys().hasOnly([]);
+    }
+
+    /** 동료 심사위원 — peer_review 문항에 승인 추가 */
+    function studentPeerApprovesVariantReview() {
+      let d = request.resource.data.diff(resource.data);
+      let allowed = ['peerApprovals', 'status', 'resolvedAt'];
+      return isAnonymous()
+        && resource.data.status == 'peer_review'
+        && request.resource.data.studentUUID == resource.data.studentUUID
+        && request.resource.data.classCode == resource.data.classCode
+        && d.addedKeys().hasOnly(allowed)
+        && d.changedKeys().hasOnly(allowed)
+        && d.removedKeys().hasOnly([])
+        && (
+          request.resource.data.status == 'peer_review'
+          || request.resource.data.status == 'approved'
+        );
+    }
+
+    function studentUpdatesOwnRegisteredVariantReview() {
+      let su = resource.data.studentUUID;
+      let allowed = [
+        'question', 'bogi', 'choices', 'solutionProcess', 'answer', 'nameMap',
+        'variantStrategyId', 'variantStrategyName',
+        'status', 'aiReviewStatus', 'aiNote', 'aiMode', 'aiApproved', 'aiChecks',
+        'aiCompletionLevel', 'updatedAt', 'classProblemId', 'classProblemLabel', 'bankDocId',
+        'resolvedAt', 'teacherComment',
+      ];
+      let d = request.resource.data.diff(resource.data);
+      let st = resource.data.status;
+      return isAnonymous()
+        && su is string
+        && studentOwnsStudentDoc(su)
+        && (st == 'registered' || st == 'approved' || st == 'rejected')
+        && request.resource.data.studentUUID == su
+        && request.resource.data.classCode == resource.data.classCode
+        && d.addedKeys().hasOnly(allowed)
+        && d.changedKeys().hasOnly(allowed)
+        && (d.removedKeys().hasOnly([]) || d.removedKeys().hasOnly(['resolvedAt']));
+    }
+
+    /** 익명 학생 — 단원 진행·뱃지·전략 집계 갱신 (최종 승인 시) */
+    function studentMayUpdateStrategyProgress(studentUUID) {
+      let allowed = [
+        'strategyCounts', 'strategyBadges', 'strategyBadgeUnlockedAt',
+        'unitProgress', 'creativeOtterCollection', 'unitBadgeHistory', 'activeUnitKey',
+        'lastActive',
+      ];
+      let d = request.resource.data.diff(resource.data);
+      return isAnonymous()
+        && studentOwnsStudentDoc(studentUUID)
+        && d.addedKeys().hasOnly(allowed)
+        && d.changedKeys().hasOnly(allowed)
+        && d.removedKeys().hasOnly([]);
+    }
+
+    /** 학급 문제은행 — 출제자가 본인 문제 등록
+     *  ★ classCode 세션 캐시 불일치 허용 → studentOwnsStudentDoc 소유만 확인 */
+    function studentCreatesOwnClassProblem() {
+      let su = request.resource.data.createdBy;
+      return isAnonymous()
+        && su is string
+        && studentOwnsStudentDoc(su)
+        && request.resource.data.status == 'registered';
+    }
+
+    /** 일일 순번 카운터 — 익명 학생 (학급 코드는 경로로 한정) */
+    function studentCreatesOwnClassProblemCounter(classCode) {
+      return isAnonymous() && classCode is string;
+    }
+
+    function studentUpdatesOwnClassProblemAi() {
+      let su = resource.data.createdBy;
+      let allowed = [
+        'aiReviewStatus', 'aiApproved', 'aiCompletionLevel', 'aiChecks',
+        'aiNote', 'aiMode', 'updatedAt',
+      ];
+      let d = request.resource.data.diff(resource.data);
+      return isAnonymous()
+        && su is string
+        && studentOwnsStudentDoc(su)
+        && d.addedKeys().hasOnly(allowed)
+        && d.changedKeys().hasOnly(allowed)
+        && d.removedKeys().hasOnly([]);
+    }
+
+    /** 학급 문제은행 — 출제자가 본인 등록 문제 내용 수정 (라벨·순번 유지) */
+    function studentUpdatesOwnClassProblemContent() {
+      let su = resource.data.createdBy;
+      let allowed = [
+        'reviewId', 'variantQuestion', 'variantBogi', 'variantChoices', 'variantAnswer',
+        'variantSolutionProcess', 'variantStrategyId', 'variantStrategyName', 'tableData', 'requiresSolution',
+        'aiReviewStatus', 'aiApproved', 'aiCompletionLevel', 'aiChecks',
+        'aiNote', 'aiMode', 'updatedAt',
+      ];
+      let d = request.resource.data.diff(resource.data);
+      return isAnonymous()
+        && su is string
+        && studentOwnsStudentDoc(su)
+        && resource.data.status == 'registered'
+        && d.addedKeys().hasOnly(allowed)
+        && d.changedKeys().hasOnly(allowed)
+        && d.removedKeys().hasOnly([]);
+    }
+
+    function studentIncrementsClassProblemEval() {
+      let d = request.resource.data.diff(resource.data);
+      return isAnonymous()
+        && d.changedKeys().hasOnly(['evalCount', 'updatedAt'])
+        && d.addedKeys().hasOnly([])
+        && d.removedKeys().hasOnly([]);
+    }
+
+    function studentCreatesVariantEvaluation() {
+      let ev = request.resource.data.evaluatorUUID;
+      return isAnonymous()
+        && ev is string
+        && studentOwnsStudentDoc(ev)
+        && request.resource.data.classCode is string
+        && get(/databases/$(database)/documents/students/$(ev)).data.classCode
+          == request.resource.data.classCode;
+    }
+
+    function studentMayUpdateExplorationAggregate(studentUUID) {
+      let allowed = ['explorationPoints', 'explorationDaily', 'explorationRolling30', 'lastActive'];
+      let d = request.resource.data.diff(resource.data);
+      return isAnonymous()
+        && studentOwnsStudentDoc(studentUUID)
+        && d.addedKeys().hasOnly(allowed)
+        && d.changedKeys().hasOnly(allowed)
+        && d.removedKeys().hasOnly([]);
+    }
+
+    /** 미니게임 오늘 최고 점수 (랭킹과 분리) */
+    function studentMayUpdateMiniGameDaily(studentUUID) {
+      let allowed = ['miniGameDaily', 'lastActive'];
+      let d = request.resource.data.diff(resource.data);
+      return isAnonymous()
+        && studentOwnsStudentDoc(studentUUID)
+        && d.addedKeys().hasOnly(allowed)
+        && d.changedKeys().hasOnly(allowed)
+        && d.removedKeys().hasOnly([]);
+    }
+
+    function studentMayMarkExplorationRewardNotified(studentUUID) {
+      let d = request.resource.data.diff(resource.data);
+      return isAnonymous()
+        && studentOwnsStudentDoc(studentUUID)
+        && resource.data.studentUUID == studentUUID
+        && resource.data.notified == false
+        && request.resource.data.notified == true
+        && d.changedKeys().hasOnly(['notified', 'notifiedAt'])
+        && d.addedKeys().hasOnly(['notifiedAt'])
+        && d.removedKeys().hasOnly([]);
+    }
+
+    function peerEvalStrategyPointsAllowed(points) {
+      return points == 3;
+    }
+
+    function peerEvalCompletionPointsAllowed(points) {
+      return points >= 2 && points <= 6 && points % 2 == 0;
+    }
+
+    function explorationRewardTeacherBackfillAllowed(studentUUID, eventId) {
+      let d = request.resource.data;
+      return isNamedUser()
+        && teacherOwnsStudentClass(
+          get(/databases/$(database)/documents/students/$(studentUUID)).data.classCode)
+        && d.backfilled == true
+        && d.notified == true
+        && (
+          (d.kind == 'solve_correct'
+            && d.problemId is string
+            && eventId == 'solve_' + d.problemId
+            && d.points == 10)
+          || (d.kind == 'peer_eval_strategy'
+            && d.problemId is string
+            && eventId == 'peer_strategy_' + d.problemId
+            && peerEvalStrategyPointsAllowed(d.points))
+          || (d.kind == 'peer_eval_completion'
+            && d.problemId is string
+            && eventId == 'peer_completion_' + d.problemId
+            && peerEvalCompletionPointsAllowed(d.points))
+          || (d.kind == 'wrong_note_approved'
+            && d.reviewId is string
+            && eventId == 'wrong_note_' + d.reviewId
+            && d.points == 20)
+          || (d.kind == 'making_approved'
+            && d.problemKey is string
+            && eventId == 'making_' + d.problemKey
+            && d.points == 30)
+        );
+    }
+
+    function explorationRewardLedgerAllowed(studentUUID, eventId) {
+      let d = request.resource.data;
+      return d.studentUUID == studentUUID
+        && d.points is int
+        && d.points > 0
+        && d.points <= 30
+        && d.kind is string
+        && d.awardDayKst is string
+        && d.labelKo is string
+        && (
+          explorationRewardTeacherBackfillAllowed(studentUUID, eventId)
+          || (
+            d.notified == false
+            && (
+              (isAnonymous()
+                && studentOwnsStudentDoc(studentUUID)
+                && (
+                  (d.kind == 'solve_correct'
+                    && d.problemId is string
+                    && eventId == 'solve_' + d.problemId
+                    && d.points == 10)
+                  || (d.kind == 'peer_eval_strategy'
+                    && d.problemId is string
+                    && eventId == 'peer_strategy_' + d.problemId
+                    && peerEvalStrategyPointsAllowed(d.points))
+                  || (d.kind == 'peer_eval_completion'
+                    && d.problemId is string
+                    && eventId == 'peer_completion_' + d.problemId
+                    && peerEvalCompletionPointsAllowed(d.points))
+                  || (d.kind == 'making_approved'
+                    && d.problemKey is string
+                    && eventId == 'making_' + d.problemKey
+                    && d.points == 30
+                    && d.reviewId is string
+                    && exists(/databases/$(database)/documents/variantReviews/$(d.reviewId))
+                    && get(/databases/$(database)/documents/variantReviews/$(d.reviewId)).data.studentUUID == studentUUID
+                    && get(/databases/$(database)/documents/variantReviews/$(d.reviewId)).data.status == 'approved')
+                ))
+              || (isNamedUser()
+                && teacherOwnsStudentClass(
+                  get(/databases/$(database)/documents/students/$(studentUUID)).data.classCode)
+                && (
+                  (d.kind == 'wrong_note_approved'
+                    && d.reviewId is string
+                    && eventId == 'wrong_note_' + d.reviewId
+                    && d.points == 20)
+                  || (d.kind == 'making_approved'
+                    && d.problemKey is string
+                    && eventId == 'making_' + d.problemKey
+                    && d.points == 30)
+                ))
+            )
+          )
+        );
+    }
+
+    function studentMayUpdateEvalGameStats(studentUUID) {
+      let allowed = [
+        'classCode', 'strategyAttempts', 'strategyHits',
+        'completionAttempts', 'completionHits', 'lastEvaluatedAt',
+        'judgeEvalAttempts', 'judgeEvalStrategyHits', 'judgeEvalCompletionHits',
+        'judgeEvalFullHits', 'judgeAiMatchPendingCount',
+      ];
+      let d = request.resource.data.diff(resource.data);
+      return isAnonymous()
+        && studentOwnsStudentDoc(studentUUID)
+        && d.addedKeys().hasOnly(allowed)
+        && d.changedKeys().hasOnly(allowed)
+        && d.removedKeys().hasOnly([]);
+    }
+
+    function studentDeletesOwnVariantEvaluation() {
+      return isAnonymous()
+        && resource.data.evaluatorUUID is string
+        && studentOwnsStudentDoc(resource.data.evaluatorUUID);
+    }
+
+    function studentDeletesOwnExplorationReward(studentUUID) {
+      return isAnonymous()
+        && studentOwnsStudentDoc(studentUUID)
+        && resource.data.studentUUID == studentUUID;
+    }
+
+    /** 익명 학생이 본인 오답노트 검수 문서를 재제출(갱신)하는지 */
+    function studentUpdatesOwnWrongNoteReview() {
+      let su = resource.data.studentUUID;
+      return isAnonymous()
+        && su is string
+        && exists(/databases/$(database)/documents/students/$(su))
+        && get(/databases/$(database)/documents/students/$(su)).data.anonUID == request.auth.uid
+        && request.resource.data.studentUUID == su
+        && request.resource.data.classCode == resource.data.classCode;
+    }
+
+    /** 교사가 students 문서 수정 시 허용 필드만 추가/변경 (필드 삭제 불가) */
+    function teacherStudentOnlyPinAndAttendanceNumbers() {
+      // classCode 변경은 "교사가 소유한 학급 간 이관"에 한해 허용
+      let allowed = [
+        'studentNumber', 'pinHash', 'examResults', 'lastActive', 'classCode',
+        'explorationPoints', 'explorationDaily', 'explorationRolling30',
+        'displayName',
+      ];
+      let d = request.resource.data.diff(resource.data);
+      return d.addedKeys().hasOnly(allowed)
+        && d.changedKeys().hasOnly(allowed)
+        && d.removedKeys().hasOnly([]);
+    }
+
+    /** 익명 학생: anonUID·lastActive 만 변경 (최초 연결 + 다른 기기 재로그인) */
+    function studentSelfMayUpdateStudentRoot() {
+      let allowed = ['anonUID', 'lastActive', 'displayName'];
+      let d = request.resource.data.diff(resource.data);
+      return isSignedIn()
+        && isAnonymous()
+        && request.resource.data.anonUID == request.auth.uid
+        && d.addedKeys().hasOnly(allowed)
+        && d.changedKeys().hasOnly(allowed)
+        && d.removedKeys().hasOnly([]);
+    }
+
+    function teacherMayUpdateStudentRoot() {
+      // 기존 학급(현재 리소스)의 소유 교사만 수정 가능
+      // + classCode를 바꾸는 경우, 새 classCode도 교사가 소유한 학급이어야 함
+      return isNamedUser()
+        && teacherOwnsStudentClass(resource.data.classCode)
+        && teacherStudentOnlyPinAndAttendanceNumbers()
+        && (
+          request.resource.data.classCode == resource.data.classCode
+          || teacherOwnsStudentClass(request.resource.data.classCode)
+        );
+    }
+
+    /** 교사 승인·반려 시 역량 이벤트 기록 */
+    function teacherCreatesMakingEventForStudent(studentUUID) {
+      let et = request.resource.data.eventType;
+      return isNamedUser()
+        && teacherOwnsStudentClass(
+            get(/databases/$(database)/documents/students/$(studentUUID)).data.classCode)
+        && (et == 'teacher_reject' || et == 'success');
+    }
+
+    /** 교사 승인 시 makingProblems 성공 플래그만 갱신 */
+    function teacherMayUpdateMakingProblemSuccess(studentUUID) {
+      let allowed = [
+        'succeeded', 'successAt', 'successPath', 'submitCountAtSuccess', 'strategyId', 'updatedAt',
+      ];
+      let d = request.resource.data.diff(resource.data);
+      return isNamedUser()
+        && teacherOwnsStudentClass(
+            get(/databases/$(database)/documents/students/$(studentUUID)).data.classCode)
+        && d.addedKeys().hasOnly(allowed)
+        && d.changedKeys().hasOnly(allowed)
+        && d.removedKeys().hasOnly([]);
+    }
+
+    // ────────────────────────────────────────
+    // 교사 프로필 (teachers/{uid})
+    // ────────────────────────────────────────
+    match /teachers/{uid} {
+      allow read:   if isSignedIn() && request.auth.uid == uid;
+      allow create: if isNamedUser() && request.auth.uid == uid;
+      allow update: if isNamedUser() && request.auth.uid == uid;
+      allow delete: if isNamedUser() && request.auth.uid == uid;
+    }
+
+    // ────────────────────────────────────────
+    // 교사 실명 명단 암호화 백업 (teacherRosters/{teacherUid}/classes/{classCode})
+    // ★ 평문 실명 없음 — encryptedPayload(AES)만 저장 ★
+    // ────────────────────────────────────────
+    match /teacherRosters/{teacherUid}/classes/{classCode} {
+      allow read, write: if isNamedUser() && request.auth.uid == teacherUid;
+    }
+
+    // ────────────────────────────────────────
+    // 학급 (classes/{classCode})
+    // ────────────────────────────────────────
+    match /classes/{classCode} {
+      allow read:   if isSignedIn();
+      allow create, update, delete: if isNamedUser();
+
+      // 채점 결과 휴지통 (7일 보관 후 영구 삭제)
+      match /trashedExamResults/{trashId} {
+        allow read, create, update, delete: if isNamedUser()
+          && teacherListedOnClassDoc(get(/databases/$(database)/documents/classes/$(classCode)));
+      }
+
+      // 학급 문제은행 — 제출 즉시 등록
+      match /problemBank/{problemId} {
+        allow read: if isSignedIn();
+        allow create: if studentCreatesOwnClassProblem();
+        allow update: if studentUpdatesOwnClassProblemAi()
+          || studentIncrementsClassProblemEval()
+          || studentUpdatesOwnClassProblemContent();
+        // 교사(기명 사용자): 이관/정리/관리 목적의 생성·수정·삭제 허용 (학급 소유 확인)
+        allow create, update, delete: if isNamedUser()
+          && teacherListedOnClassDoc(get(/databases/$(database)/documents/classes/$(classCode)));
+      }
+
+      match /dailyProblemCounters/{dateKey} {
+        allow read: if isSignedIn();
+        allow create, update: if studentCreatesOwnClassProblemCounter(classCode);
+        // 교사(기명 사용자): 학급코드 이관 시 카운터 복사 허용 (학급 소유 확인)
+        allow create, update: if isNamedUser()
+          && teacherListedOnClassDoc(get(/databases/$(database)/documents/classes/$(classCode)));
+        allow delete: if false;
+      }
+    }
+
+    // ────────────────────────────────────────
+    // 학생 (students/{uuid})
+    // ★ 실명은 이 문서에 존재하지 않음 ★
+    // ────────────────────────────────────────
+    match /students/{uuid} {
+      allow read:   if isSignedIn();
+      allow create: if isNamedUser();
+      allow update: if teacherMayUpdateStudentRoot()
+        || studentSelfMayUpdateStudentRoot()
+        || studentMayUpdateStrategyProgress(uuid)
+        || studentMayUpdateExplorationAggregate(uuid)
+        || studentMayUpdateMiniGameDaily(uuid);
+      allow delete: if isNamedUser() && teacherOwnsStudentClass(resource.data.classCode);
+    }
+
+    // ────────────────────────────────────────
+    // 퀴즈 결과 (students/{uuid}/quizResults/{resultId})
+    // ────────────────────────────────────────
+    match /students/{uuid}/quizResults/{resultId} {
+      allow read: if isNamedUser()
+                  || (isSignedIn() && get(/databases/$(database)/documents/students/$(uuid)).data.anonUID == request.auth.uid);
+
+      allow create, update: if isSignedIn()
+                            && get(/databases/$(database)/documents/students/$(uuid)).data.anonUID == request.auth.uid;
+
+      allow delete: if isNamedUser()
+                    && teacherOwnsStudentClass(get(/databases/$(database)/documents/students/$(uuid)).data.classCode);
+    }
+
+    // 단원평가 오답노트 (학생 작성, 교사 읽기)
+    match /students/{studentUUID}/examWrongNotes/{noteId} {
+      allow read: if isSignedIn()
+        && (
+          (isAnonymous()
+            && get(/databases/$(database)/documents/students/$(studentUUID)).data.anonUID == request.auth.uid)
+          || (isNamedUser()
+            && teacherOwnsStudentClass(
+              get(/databases/$(database)/documents/students/$(studentUUID)).data.classCode))
+        );
+
+      allow create, update: if isAnonymous()
+        && get(/databases/$(database)/documents/students/$(studentUUID)).data.anonUID == request.auth.uid;
+
+      allow update: if isNamedUser()
+        && teacherOwnsStudentClass(
+          get(/databases/$(database)/documents/students/$(studentUUID)).data.classCode);
+
+      allow delete: if isNamedUser()
+        && teacherOwnsStudentClass(
+          get(/databases/$(database)/documents/students/$(studentUUID)).data.classCode);
+    }
+
+    // 문제 만들기 역량 — 제출 이벤트·문항별 집계
+    match /students/{studentUUID}/makingEvents/{eventId} {
+      allow read: if isSignedIn()
+        && (
+          (isAnonymous()
+            && get(/databases/$(database)/documents/students/$(studentUUID)).data.anonUID == request.auth.uid)
+          || (isNamedUser()
+            && teacherOwnsStudentClass(
+              get(/databases/$(database)/documents/students/$(studentUUID)).data.classCode))
+        );
+
+      allow create: if (isAnonymous()
+          && get(/databases/$(database)/documents/students/$(studentUUID)).data.anonUID == request.auth.uid)
+        || teacherCreatesMakingEventForStudent(studentUUID);
+
+      allow update, delete: if false;
+    }
+
+    match /students/{studentUUID}/makingProblems/{problemKey} {
+      allow read: if isSignedIn()
+        && (
+          (isAnonymous()
+            && get(/databases/$(database)/documents/students/$(studentUUID)).data.anonUID == request.auth.uid)
+          || (isNamedUser()
+            && teacherOwnsStudentClass(
+              get(/databases/$(database)/documents/students/$(studentUUID)).data.classCode))
+        );
+
+      allow create, update: if isAnonymous()
+        && get(/databases/$(database)/documents/students/$(studentUUID)).data.anonUID == request.auth.uid;
+
+      allow update: if teacherMayUpdateMakingProblemSuccess(studentUUID);
+
+      allow delete: if false;
+    }
+
+    // 학생 변형 문제 보관함 (ProblemModifier 저장·교사 검수 반영)
+    match /students/{studentUUID}/problemBank/{bankId} {
+      allow read: if isSignedIn()
+        && (
+          (isAnonymous()
+            && get(/databases/$(database)/documents/students/$(studentUUID)).data.anonUID == request.auth.uid)
+          || (isNamedUser()
+            && teacherOwnsStudentClass(
+              get(/databases/$(database)/documents/students/$(studentUUID)).data.classCode))
+        );
+
+      allow create: if isAnonymous()
+        && get(/databases/$(database)/documents/students/$(studentUUID)).data.anonUID == request.auth.uid;
+
+      allow update: if (isAnonymous()
+          && get(/databases/$(database)/documents/students/$(studentUUID)).data.anonUID == request.auth.uid)
+        || (isNamedUser()
+          && teacherOwnsStudentClass(
+            get(/databases/$(database)/documents/students/$(studentUUID)).data.classCode));
+
+      allow delete: if studentOwnsStudentDoc(studentUUID)
+        || (isNamedUser()
+          && teacherOwnsStudentClass(
+            get(/databases/$(database)/documents/students/$(studentUUID)).data.classCode));
+    }
+
+    // 동료 평가 게임 점수 (AI·출제자 기준 맞히기)
+    match /students/{studentUUID}/evalGameStats/{docId} {
+      allow read: if isSignedIn()
+        && (
+          (isAnonymous() && studentOwnsStudentDoc(studentUUID))
+          || (isNamedUser()
+            && teacherOwnsStudentClass(
+              get(/databases/$(database)/documents/students/$(studentUUID)).data.classCode))
+        );
+      allow create, update: if studentMayUpdateEvalGameStats(studentUUID);
+      allow delete: if false;
+    }
+
+    // 탐구 포인트 적립 원장 (중복 방지용 eventId)
+    match /students/{studentUUID}/explorationRewards/{eventId} {
+      allow read: if isSignedIn()
+        && (
+          (isAnonymous() && studentOwnsStudentDoc(studentUUID))
+          || (isNamedUser()
+            && teacherOwnsStudentClass(
+              get(/databases/$(database)/documents/students/$(studentUUID)).data.classCode))
+        );
+      allow create: if explorationRewardLedgerAllowed(studentUUID, eventId);
+      allow update: if studentMayMarkExplorationRewardNotified(studentUUID);
+      allow delete: if studentDeletesOwnExplorationReward(studentUUID);
+    }
+
+    // ────────────────────────────────────────
+    // 시험지 (exams/{examId})
+    // ────────────────────────────────────────
+    match /exams/{examId} {
+      allow read:   if isSignedIn();
+      allow create, update, delete: if isNamedUser();
+
+      match /questions/{questionId} {
+        allow read:   if isSignedIn();
+        allow create, update, delete: if isNamedUser();
+      }
+
+      // 교사 AI가이드 (교사 생성/저장/학생에게 전송)
+      // - 교사(기명 사용자): 읽기/쓰기 가능
+      // - 학생(익명): published=true 인 가이드만 읽기 가능 (학생 화면 노출 대비)
+      match /teacherAiGuides/{docId} {
+        allow read: if isNamedUser()
+          || (isAnonymous() && resource.data.published == true);
+        allow create, update, delete: if isNamedUser();
+      }
+
+      match /variants/{studentUUID}/questions/{questionId} {
+        allow read:   if isSignedIn();
+        allow create, update: if isSignedIn()
+          && get(/databases/$(database)/documents/students/$(studentUUID)).data.anonUID == request.auth.uid;
+        allow delete: if isSignedIn()
+          && (
+            get(/databases/$(database)/documents/students/$(studentUUID)).data.anonUID == request.auth.uid
+            || (isNamedUser()
+              && teacherOwnsStudentClass(
+                get(/databases/$(database)/documents/students/$(studentUUID)).data.classCode))
+          );
+      }
+    }
+
+    /** 교사가 학급 문제은행 등록분의 누락된 variantReviews 문서를 백필하는지 */
+    function teacherCreatesVariantReviewForOwnClass() {
+      let data = request.resource.data;
+      return isNamedUser()
+        && data.studentUUID is string
+        && data.classCode is string
+        && teacherOwnsVariantReviewClassFromData(data)
+        && teacherOwnsStudentInVariantReview(data);
+    }
+
+    /** 본인이 제출한 variantReviews 문서 읽기 (학생 재제출·상태 확인) */
+    function studentOwnsVariantReviewFromData(data) {
+      let su = data.studentUUID;
+      return su is string && studentOwnsStudentDoc(su);
+    }
+
+    /** 학급 문제은행에 등록된 변형 — 풀이 후 출제자 풀이 확인용 */
+    function variantReviewPublishedInClassBank() {
+      let d = resource.data;
+      let cpid = d.classProblemId;
+      let cc = d.classCode;
+      return cpid is string && cc is string
+        && (d.status == 'registered'
+          || d.status == 'approved'
+          || d.status == 'approved_partial'
+          || d.status == 'pending_review'
+          || d.status == 'peer_review')
+        && exists(/databases/$(database)/documents/classes/$(cc)/problemBank/$(cpid));
+    }
+
+    // 변형 문제 교사 검수 대기열 (variantReviews)
+    match /variantReviews/{reviewId} {
+      allow read:   if (isNamedUser() && (
+                      teacherOwnsVariantReviewClassFromData(resource.data)
+                      || teacherOwnsStudentInVariantReview(resource.data)
+                    ))
+                    || studentOwnsVariantReviewFromData(resource.data)
+                    || (isSignedIn() && resource.data.status == 'peer_review')
+                    || (isSignedIn() && variantReviewPublishedInClassBank());
+      allow create: if studentCreatesOwnVariantReview()
+                    || teacherCreatesVariantReviewForOwnClass();
+      allow update: if (isNamedUser() && (
+                        teacherOwnsVariantReviewClassFromData(resource.data)
+                        || teacherOwnsStudentInVariantReview(resource.data)
+                      ))
+                    || studentUpdatesOwnPendingVariantReview()
+                    || studentUpdatesOwnVariantReviewAi()
+                    || studentUpdatesOwnRegisteredVariantReview()
+                    || studentPeerApprovesVariantReview();
+      allow delete: if studentDeletesOwnPendingVariantReview()
+                    || teacherDeletesOwnClassReviewSubmission();
+    }
+
+    // 동료 평가 · AI 괴리 로그
+    match /variantEvaluations/{evalId} {
+      allow read: if isNamedUser()
+        || (isAnonymous() && resource.data.evaluatorUUID is string
+          && studentOwnsStudentDoc(resource.data.evaluatorUUID));
+      allow create: if studentCreatesVariantEvaluation();
+      allow update: if false;
+      allow delete: if studentDeletesOwnVariantEvaluation();
+    }
+
+    // 단원평가 오답노트 교사 검수 대기열 (wrongNoteReviews)
+    match /wrongNoteReviews/{reviewId} {
+      allow read:   if isNamedUser() && (
+                      teacherOwnsVariantReviewClassFromData(resource.data)
+                      || teacherOwnsStudentInVariantReview(resource.data)
+                    );
+      allow create: if studentCreatesOwnWrongNoteReview();
+      allow update: if (isNamedUser() && (
+                        teacherOwnsVariantReviewClassFromData(resource.data)
+                        || teacherOwnsStudentInVariantReview(resource.data)
+                      ))
+                    || studentUpdatesOwnWrongNoteReview();
+      allow delete: if teacherDeletesOwnClassReviewSubmission();
+    }
+
+    // 변형 가이드 — 전략별 실수 메모리 (교사 재생성 시 누적, 다음 생성에 반영)
+    match /guideLearnedAvoid/{strategyId} {
+      allow read: if isNamedUser();
+      allow create, update: if isNamedUser();
+      allow delete: if false;
+    }
+
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

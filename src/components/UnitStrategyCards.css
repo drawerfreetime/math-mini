@@ -1,0 +1,94 @@
+.unit-strategy-cards__head {
+  margin-bottom: 12px;
+}
+
+.unit-strategy-cards__title {
+  margin: 0 0 4px;
+  font-size: 1.05rem;
+  color: #4c1d95;
+}
+
+.unit-strategy-cards__desc {
+  margin: 0;
+  font-size: 0.82rem;
+  color: #6b7280;
+}
+
+.unit-strategy-cards__grid {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 10px;
+}
+
+.unit-strategy-card {
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  padding: 10px 12px;
+  background: #fff;
+}
+
+.unit-strategy-card__top {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+
+.unit-strategy-card__title {
+  margin: 0;
+  font-size: 0.92rem;
+  color: #312e81;
+}
+
+.unit-strategy-card__count {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: #6d28d9;
+  white-space: nowrap;
+}
+
+.unit-strategy-card__blurb {
+  margin: 0 0 8px;
+  font-size: 0.78rem;
+  color: #6b7280;
+  line-height: 1.35;
+}
+
+.unit-strategy-card__marks {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.unit-strategy-card__mark {
+  font-size: 0.72rem;
+  padding: 2px 6px;
+  border-radius: 999px;
+  background: #f3f4f6;
+  color: #374151;
+}
+
+.unit-strategy-card__mark--judge {
+  background: #dbeafe;
+  color: #1d4ed8;
+}
+
+.unit-strategy-card__mark--adept {
+  background: #fef3c7;
+  color: #b45309;
+}
+
+.unit-strategy-card__mark--legendary {
+  background: #fce7f3;
+  color: #9d174d;
+}
+
+.unit-strategy-cards__loading {
+  text-align: center;
+  color: #6b7280;
+  font-size: 0.9rem;
+}

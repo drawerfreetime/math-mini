@@ -1,0 +1,194 @@
+.legal-doc {
+  flex: 1;
+  min-height: 0;
+  width: 100%;
+  padding: clamp(1rem, 4vw, 2rem);
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  background: var(--gray-50);
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+  font-family: var(--font-app-sans);
+}
+
+.legal-doc__card {
+  width: 100%;
+  max-width: 42rem;
+  background: #fff;
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-md);
+  padding: clamp(1.25rem, 4vw, 2rem);
+  min-width: 0;
+}
+
+.legal-doc__back {
+  display: inline-block;
+  margin-bottom: 1rem;
+  font-size: clamp(0.875rem, 2.5vw, 0.9375rem);
+  color: var(--primary);
+  text-decoration: none;
+  word-break: keep-all;
+}
+
+.legal-doc__back:hover {
+  text-decoration: underline;
+}
+
+.legal-doc__title {
+  font-size: clamp(1.25rem, 4vw, 1.5rem);
+  font-weight: 800;
+  color: var(--gray-900);
+  margin-bottom: 1rem;
+  word-break: keep-all;
+  overflow-wrap: break-word;
+  line-height: 1.35;
+}
+
+.legal-doc__body {
+  font-size: clamp(0.875rem, 2.5vw, 0.9375rem);
+  color: var(--gray-700);
+  line-height: 1.65;
+  word-break: keep-all;
+  overflow-wrap: break-word;
+}
+
+.legal-doc__body > p + p {
+  margin-top: 0.75rem;
+}
+
+/* —— 개인정보 처리방침 등 마크다운 본문 —— */
+.legal-doc__markdown {
+  min-width: 0;
+  color: #374151;
+  font-size: clamp(0.9375rem, 2.4vw, 1rem);
+  line-height: 1.8;
+}
+
+.legal-doc__markdown h2 {
+  margin: 2rem 0 0.75rem;
+  padding: 0;
+  font-size: 1.4rem;
+  font-weight: 800;
+  line-height: 1.35;
+  letter-spacing: -0.02em;
+  color: #000000;
+  word-break: keep-all;
+  overflow-wrap: break-word;
+}
+
+.legal-doc__markdown h2:first-child {
+  margin-top: 0;
+}
+
+.legal-doc__markdown p {
+  margin: 0;
+  color: #374151;
+}
+
+/* 본문·조항 1. 2. 단계: 줄간격 1.8, 숫자 단계는 굵게 */
+.legal-doc__markdown p.legal-doc__md-body,
+.legal-doc__markdown p.legal-doc__md-note {
+  line-height: 1.8;
+  font-weight: 400;
+}
+
+.legal-doc__markdown p.legal-doc__md-num {
+  line-height: 1.8;
+  font-weight: 700;
+  font-size: 1.1em;
+  color: #374151;
+}
+
+.legal-doc__markdown p.legal-doc__md-note {
+  font-size: 0.94em;
+  opacity: 0.95;
+}
+
+/* 가. 1) 가) (1) … 세부 묶음: 줄간격 1.6 */
+.legal-doc__markdown p.legal-doc__md-detail {
+  line-height: 1.6;
+  font-weight: 400;
+  font-size: 0.98em;
+  color: #374151;
+}
+
+/* 문단 간격: 본문은 넓게, 세부 묶음은 좁게 */
+.legal-doc__markdown > p + p {
+  margin-top: 0.5rem;
+}
+
+.legal-doc__markdown > p.legal-doc__md-body + p.legal-doc__md-body {
+  margin-top: 0.65rem;
+}
+
+.legal-doc__markdown > p.legal-doc__md-detail + p.legal-doc__md-detail {
+  margin-top: 0.3rem;
+}
+
+.legal-doc__markdown > p.legal-doc__md-num + p.legal-doc__md-num {
+  margin-top: 0.75rem;
+}
+
+.legal-doc__markdown > p.legal-doc__md-num + p.legal-doc__md-detail,
+.legal-doc__markdown > p.legal-doc__md-detail + p.legal-doc__md-num {
+  margin-top: 0.45rem;
+}
+
+.legal-doc__markdown > p.legal-doc__md-body + p.legal-doc__md-num,
+.legal-doc__markdown > p.legal-doc__md-num + p.legal-doc__md-body {
+  margin-top: 0.75rem;
+}
+
+.legal-doc__markdown > h2 + p {
+  margin-top: 0.25rem;
+}
+
+.legal-doc__markdown strong {
+  color: #1f2937;
+  font-weight: 600;
+}
+
+.legal-doc__markdown ul,
+.legal-doc__markdown ol {
+  margin: 0.5rem 0 0;
+  padding-left: 1.25rem;
+  line-height: 1.6;
+  color: #374151;
+}
+
+.legal-doc__markdown li + li {
+  margin-top: 0.35rem;
+}
+
+.legal-doc__markdown table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 0.85rem 0;
+  font-size: clamp(0.8125rem, 2.2vw, 0.9rem);
+  line-height: 1.55;
+  color: #374151;
+}
+
+.legal-doc__markdown th,
+.legal-doc__markdown td {
+  border: 1px solid var(--gray-200, #e5e7eb);
+  padding: 0.55rem 0.65rem;
+  vertical-align: top;
+  text-align: left;
+}
+
+.legal-doc__markdown th {
+  background: var(--gray-50, #f9fafb);
+  font-weight: 700;
+  color: #111827;
+}
+
+.legal-doc__markdown a {
+  color: var(--primary);
+  word-break: break-all;
+}
+
+.legal-doc__markdown a:hover {
+  text-decoration: underline;
+}

@@ -1,0 +1,598 @@
+/* MathLive — 삼각 메뉴(고등 기호) 숨김, 포커스 링만 유지 */
+math-field::part(menu-toggle) {
+  display: none !important;
+}
+
+.inline-math-editor {
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  background: #fff;
+  overflow: hidden;
+}
+
+.inline-math-editor__toolbar {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 12px;
+  background: linear-gradient(180deg, #f8fafc 0%, #f1f5f9 100%);
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.inline-math-editor__toolbar--insert-only {
+  flex-direction: column;
+  align-items: stretch;
+  gap: 8px;
+  padding-bottom: 10px;
+}
+
+.inline-math-editor__hint {
+  font-size: 13px;
+  color: #64748b;
+  line-height: 1.45;
+  margin: 0;
+  padding: 0 4px;
+}
+
+.inline-math-editor__row-label {
+  font-size: 12px;
+  font-weight: 700;
+  color: #475569;
+  margin-bottom: 4px;
+}
+
+.inline-math-editor__row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+
+.inline-math-editor__btn {
+  min-height: 48px;
+  min-width: 48px;
+  padding: 8px 12px;
+  font-size: 18px;
+  font-weight: 600;
+  border-radius: 12px;
+  border: 2px solid #cbd5e1;
+  background: #fff;
+  color: #0f172a;
+  cursor: pointer;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.06);
+  touch-action: manipulation;
+  transition: background 0.12s, border-color 0.12s, transform 0.08s;
+}
+
+.inline-math-editor__btn:hover {
+  background: #ede9fe;
+  border-color: #a78bfa;
+}
+
+.inline-math-editor__btn:active {
+  transform: scale(0.97);
+}
+
+.inline-math-editor__btn--graph {
+  border-color: #a78bfa;
+  background: #faf5ff;
+  color: #1d4ed8;
+}
+
+.inline-math-editor__btn--graph:hover {
+  background: #ede9fe;
+  border-color: #60a5fa;
+}
+
+.inline-math-editor__btn--wide {
+  min-width: auto;
+  padding-left: 16px;
+  padding-right: 16px;
+  font-size: 15px;
+}
+
+.inline-math-editor__btn--accent {
+  background: #4f46e5;
+  color: #fff;
+  border-color: #4338ca;
+}
+
+.inline-math-editor__btn--accent:hover {
+  background: #4338ca;
+  border-color: #3730a3;
+}
+
+.inline-math-editor__btn--ghost {
+  background: #f1f5f9;
+  color: #334155;
+  border-color: #cbd5e1;
+}
+
+.inline-math-editor__btn--ghost:hover {
+  background: #e2e8f0;
+  border-color: #94a3b8;
+}
+
+/* ── 수식 입력 모달 ── */
+.inline-math-editor__modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 12000;
+  background: rgba(15, 23, 42, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  box-sizing: border-box;
+}
+
+.inline-math-editor__modal {
+  width: min(600px, 100%);
+  max-width: 100%;
+  padding: 0;
+  overflow: hidden;
+  background: #fff;
+  border-radius: 16px;
+  box-shadow: 0 25px 50px -12px rgba(15, 23, 42, 0.28);
+  border: 1px solid #e2e8f0;
+}
+
+.inline-math-editor__modal--compact {
+  width: min(480px, 100%);
+}
+
+.inline-math-editor__modal-surface {
+  display: flex;
+  flex-direction: column;
+}
+
+.inline-math-editor__modal-surface--compact {
+  height: auto;
+  max-height: none;
+}
+
+/* 약 1/3: 입력 */
+.inline-math-editor__modal-section--input {
+  flex: 1 1 0;
+  min-height: 0;
+  overflow: auto;
+  padding: 16px 18px 12px;
+}
+
+/* ── 인라인 확장형 연산·단위 툴바 ── */
+.inline-math-editor__unit-toolbar {
+  padding: 10px 12px 12px;
+  background: linear-gradient(180deg, #f1f5f9 0%, #e2e8f0 100%);
+  border-top: 1px solid #cbd5e1;
+}
+
+.inline-math-editor__unit-toolbar-inner {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: stretch;
+  gap: 8px;
+}
+
+.inline-math-editor__cat-btn {
+  flex-shrink: 0;
+  padding: 7px 8px;
+  min-height: 44px;
+  font-size: 13px;
+  font-weight: 700;
+  color: #334155;
+  background: #fff;
+  border: 2px solid #cbd5e1;
+  border-radius: 999px;
+  cursor: pointer;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.06);
+  transition:
+    background 0.2s ease,
+    border-color 0.2s ease,
+    box-shadow 0.2s ease,
+    transform 0.12s ease;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+
+.inline-math-editor__cat-btn-label {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1px;
+  line-height: 1.18;
+}
+
+.inline-math-editor__cat-btn-line {
+  display: block;
+  white-space: nowrap;
+}
+
+.inline-math-editor__cat-btn:hover {
+  border-color: #818cf8;
+  background: #eef2ff;
+}
+
+.inline-math-editor__cat-btn.is-active {
+  background: #4f46e5;
+  color: #fff;
+  border-color: #4338ca;
+  box-shadow: 0 2px 8px rgba(79, 70, 229, 0.35);
+}
+
+.inline-math-editor__unit-panel {
+  flex: 1 1 110px;
+  min-width: 0;
+  max-width: 0;
+  opacity: 0;
+  overflow: hidden;
+  transition:
+    max-width 0.35s cubic-bezier(0.4, 0, 0.2, 1),
+    opacity 0.25s ease,
+    padding 0.25s ease;
+  padding: 0;
+  border-radius: 12px;
+}
+
+.inline-math-editor__unit-panel.is-open {
+  max-width: 2000px;
+  opacity: 1;
+  padding: 8px 4px 8px 10px;
+  background: rgba(255, 255, 255, 0.85);
+  border: 1px solid #cbd5e1;
+}
+
+/* 한 줄 가로 스크롤 + 화살표 오버레이 */
+.inline-math-editor__sym-scroll-wrap {
+  position: relative;
+  flex: 1 1 0;
+  min-width: 0;
+  padding: 4px 0;
+  box-sizing: border-box;
+}
+
+/* 한 줄에 모두 들어올 때: 스크롤·화살표 없음 */
+.inline-math-editor__sym-scroll-wrap--fit {
+  padding: 4px 0;
+}
+
+.inline-math-editor__unit-panel-scroll {
+  display: flex;
+  flex-wrap: nowrap;
+  white-space: nowrap;
+  gap: 14px;
+  align-items: center;
+  flex: 1 1 auto;
+  min-width: 0;
+  width: 100%;
+  box-sizing: border-box;
+  padding: 2px 38px;
+  overflow-x: auto;
+  overflow-y: hidden;
+  -webkit-overflow-scrolling: touch;
+  touch-action: pan-x;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.inline-math-editor__unit-panel-scroll::-webkit-scrollbar {
+  display: none;
+}
+
+/* 넘칠 때만 쓰는 좌우 패딩은 스크롤 모드에서 유지, fit에서는 아래에서 덮음 */
+.inline-math-editor__unit-panel-scroll--fit {
+  overflow-x: visible;
+  padding: 2px 6px;
+  touch-action: manipulation;
+}
+
+.inline-math-editor__unit-panel-scroll--dense {
+  gap: 8px;
+}
+
+.inline-math-editor__unit-panel-scroll--dense .inline-math-editor__sym-btn {
+  min-width: 38px;
+  min-height: 40px;
+  padding: 6px 9px;
+  font-size: 16px;
+}
+
+.inline-math-editor__sym-scroll-btn {
+  position: absolute;
+  top: 4px;
+  bottom: 4px;
+  width: 40px;
+  z-index: 3;
+  margin: 0;
+  padding: 0;
+  border: none;
+  border-radius: 0;
+  background: transparent;
+  cursor: pointer;
+  font-size: 1.35rem;
+  font-weight: 700;
+  color: #475569;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transition:
+    opacity 0.2s ease,
+    visibility 0.2s ease;
+}
+
+.inline-math-editor__sym-scroll-btn.is-visible {
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+}
+
+.inline-math-editor__sym-scroll-btn--prev {
+  left: 0;
+  padding-right: 6px;
+}
+
+.inline-math-editor__sym-scroll-btn--prev::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background: linear-gradient(
+    to right,
+    rgba(255, 255, 255, 0.95) 0%,
+    rgba(241, 245, 249, 0.65) 50%,
+    transparent 100%
+  );
+}
+
+.inline-math-editor__sym-scroll-btn--next {
+  right: 0;
+  padding-left: 6px;
+}
+
+.inline-math-editor__sym-scroll-btn--next::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background: linear-gradient(
+    to left,
+    rgba(255, 255, 255, 0.95) 0%,
+    rgba(241, 245, 249, 0.65) 50%,
+    transparent 100%
+  );
+}
+
+.inline-math-editor__sym-scroll-btn:hover {
+  color: #1e293b;
+}
+
+.inline-math-editor__sym-scroll-btn:active {
+  color: #0f172a;
+}
+
+.inline-math-editor__sym-btn {
+  flex-shrink: 0;
+  min-height: 44px;
+  min-width: 44px;
+  padding: 7px 13px;
+  font-size: 17px;
+  font-weight: 600;
+  font-family:
+    'STIX Two Math',
+    'Cambria Math',
+    'Noto Sans Math',
+    serif;
+  border-radius: 10px;
+  border: 2px solid #e2e8f0;
+  background: #fff;
+  color: #0f172a;
+  cursor: pointer;
+  touch-action: pan-x;
+  transition: background 0.15s, border-color 0.15s, transform 0.1s;
+}
+
+.inline-math-editor__sym-btn:hover {
+  background: #ede9fe;
+  border-color: #a5b4fc;
+}
+
+.inline-math-editor__sym-btn:active {
+  transform: scale(0.96);
+}
+
+.inline-math-editor__sym-label {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0;
+  vertical-align: middle;
+}
+
+.inline-math-editor__sym-sup {
+  font-size: 0.58em;
+  font-weight: 700;
+  vertical-align: super;
+  line-height: 0;
+  margin-left: 0.05em;
+  position: relative;
+  top: -0.04em;
+}
+
+/* 넓이/부피 버튼 — KaTeX ($\\mathrm{mm}^{2}$) */
+.inline-math-editor__sym-katex-label {
+  display: inline-block;
+  vertical-align: middle;
+  line-height: 0;
+  user-select: none;
+}
+
+.inline-math-editor__sym-katex-label .katex {
+  font-size: 1.08em;
+  font-weight: 500;
+}
+
+.inline-math-editor__unit-panel-scroll--dense .inline-math-editor__sym-katex-label .katex {
+  font-size: 1.02em;
+}
+
+/* 원자 단위 블록 (contenteditable 밖) — 본문과 동일하게 글자만 보이게 */
+.inline-math-editor .inline-math-atomic-unit {
+  display: inline-block;
+  vertical-align: baseline;
+  margin: 0;
+  padding: 0;
+  border: none;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  user-select: none;
+  cursor: default;
+  color: inherit;
+  font-family: inherit;
+  font-weight: inherit;
+  font-size: inherit;
+  line-height: inherit;
+}
+
+.inline-math-editor .inline-math-atomic-unit__sup {
+  font-size: 0.58em;
+  font-weight: 700;
+  vertical-align: super;
+  line-height: 0;
+  margin-left: 0.05em;
+  position: relative;
+  top: -0.04em;
+}
+
+.inline-math-editor--compact .inline-math-atomic-unit {
+  padding: 0;
+  font-size: inherit;
+}
+
+.inline-math-editor__modal-title {
+  margin: 0 0 8px;
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.inline-math-editor__modal-desc {
+  margin: 0 0 12px;
+  font-size: 14px;
+  color: #64748b;
+  line-height: 1.45;
+}
+
+.inline-math-editor__modal-field-host {
+  min-height: 64px;
+  margin-bottom: 4px;
+}
+
+.inline-math-editor__modal-field-host math-field {
+  display: block;
+  width: 100%;
+  min-height: 56px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  border: 2px solid #c4b5fd;
+  background: #faf5ff;
+  font-size: 1.1rem;
+  box-sizing: border-box;
+}
+
+.inline-math-editor__modal-error {
+  margin: 8px 0 0;
+  font-size: 13px;
+  color: #b91c1c;
+}
+
+.inline-math-editor__fraction-guard-hint {
+  margin: 8px 0 0;
+  padding: 10px 12px;
+  font-size: 14px;
+  line-height: 1.45;
+  color: #92400e;
+  background: #fffbeb;
+  border: 1px solid #fcd34d;
+  border-radius: 10px;
+}
+
+.inline-math-editor__modal-actions {
+  flex-shrink: 0;
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  padding: 12px 18px 14px;
+  margin-top: 0;
+  flex-wrap: wrap;
+  background: #f8fafc;
+  border-top: 1px solid #e2e8f0;
+}
+
+.inline-math-editable {
+  min-height: 120px;
+  max-height: 360px;
+  overflow-y: auto;
+  padding: 14px 16px;
+  font-size: 18px;
+  line-height: 1.55;
+  white-space: pre-wrap;
+  word-break: break-word;
+  outline: none;
+  color: #111827;
+  font-family:
+    'STIX Two Math',
+    'Cambria Math',
+    'Noto Sans Math',
+    var(--font-app-sans);
+  font-variant-numeric: lining-nums proportional-nums;
+}
+
+.inline-math-editable:focus {
+  box-shadow: inset 0 0 0 2px #a5b4fc;
+}
+
+.inline-math-editable--single {
+  min-height: 52px;
+  max-height: 120px;
+}
+
+.inline-math-editable:empty::before {
+  content: attr(data-placeholder);
+  color: #9ca3af;
+  pointer-events: none;
+}
+
+/* 본문에 넣는 편집 불가 수식 (KaTeX) */
+.inline-math-editor .inline-math-frozen {
+  display: inline-block;
+  vertical-align: middle;
+  margin: 2px 4px;
+  padding: 2px 6px;
+  border-radius: 8px;
+  border: 1px solid #c4b5fd;
+  background: linear-gradient(180deg, #faf5ff 0%, #f5f3ff 100%);
+  box-shadow: 0 1px 2px rgba(99, 102, 241, 0.1);
+  user-select: none;
+  cursor: pointer;
+}
+
+.inline-math-editor--compact .inline-math-frozen {
+  margin: 1px 3px;
+  padding: 1px 4px;
+}
+
+.inline-math-editor .inline-math-frozen .katex {
+  font-size: 1.05em;
+}
+
+.inline-math-editor--compact .inline-math-frozen .katex {
+  font-size: 0.98em;
+}

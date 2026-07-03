@@ -1,0 +1,764 @@
+/* =============================================
+   StudentMenuSidebar — 학생 메뉴 사이드바
+   ============================================= */
+
+/* 사이드바 + 메인 영역을 감싸는 body */
+.student-dashboard-body {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+  align-items: flex-start;
+}
+
+/* ─── 사이드바 ─── */
+.student-menu-sidebar {
+  /*
+   * 290px = 사이드바 최대폭 (20px 패딩 × 2 = 40px → 내부 250px = 캐릭터 사진)
+   * 22vw  = 뷰포트 비례: 창을 줄이면 사이드바·사진이 같은 비율로 축소
+   * 200px = 최소폭 (이하로는 스택 레이아웃으로 전환)
+   */
+  width: clamp(200px, 22vw, 290px);
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 24px 20px;
+  min-height: calc(100vh - 68px);
+  position: sticky;
+  top: 68px;          /* dashboard-header 높이 */
+  align-self: flex-start;
+  background: var(--hud-surface);
+  border-right: 2px solid var(--hud-border-subtle);
+}
+
+/* ─── 캐릭터 카드 ─── */
+.sidebar-character-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 0 14px;   /* 가로 패딩 없음 — 프레임이 카드 폭을 꽉 채움 */
+  background: var(--hud-surface-raised);
+  border: 2px solid var(--hud-frame);
+  border-radius: 12px;
+  box-shadow: 0 0 8px var(--hud-glow-soft);
+  transition: border-color 0.2s, background 0.2s;
+}
+
+.sidebar-character-frame {
+  position: relative;
+  width: 100%;            /* 사이드바 내부 폭 = 최대 250px, 창 줄이면 비례 축소 */
+  aspect-ratio: 1 / 1;   /* 항상 정사각형 유지 */
+  border-radius: 12px;
+  overflow: hidden;
+  border: 3px solid var(--hud-frame);
+  background: transparent;
+  box-shadow: 0 0 12px var(--hud-glow-soft);
+}
+
+.sidebar-character-img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  display: block;
+}
+
+.sidebar-character-name {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--hud-text);
+  text-align: center;
+  line-height: 1.3;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.sidebar-level-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 14px;
+  border-radius: 99px;
+  font-size: 13px;
+  font-weight: 800;
+  background: var(--hud-frame);
+  color: #fff;
+  letter-spacing: 0.03em;
+}
+
+/* ─── 구분선 ─── */
+.sidebar-divider {
+  height: 1px;
+  background: var(--hud-border-subtle);
+  border: none;
+  margin: 0;
+}
+
+/* ─── 통계 ─── */
+.sidebar-stats {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.sidebar-stat-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  padding: 6px 8px;
+  border-radius: 8px;
+  background: var(--hud-surface-raised);
+  border: 1px solid var(--hud-border-subtle);
+}
+
+.sidebar-stat-label {
+  font-size: 13px;
+  color: var(--hud-text-muted);
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  flex-shrink: 0;
+}
+
+.sidebar-stat-value {
+  font-size: 16px;
+  font-weight: 800;
+  color: var(--hud-text);
+  text-align: right;
+}
+
+.sidebar-stat-loading {
+  font-size: 14px;
+  color: var(--hud-text-muted);
+}
+
+/* ─── 마이페이지 링크 ─── */
+.sidebar-mypage-btn {
+  width: 100%;
+  margin-top: auto;
+  padding: 8px 10px;
+  background: none;
+  border: 1.5px solid var(--hud-frame);
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--hud-text);
+  cursor: pointer;
+  text-align: center;
+  transition: background 0.15s, color 0.15s;
+  font-family: inherit;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+}
+
+.sidebar-mypage-btn:hover {
+  background: var(--hud-frame);
+  color: #fff;
+}
+
+/* ─── 메인 영역 ─── */
+.student-dashboard-main {
+  flex: 1;
+  min-width: 0;
+  padding: 28px 32px;
+  max-width: 900px;
+}
+
+/* ─── 반응형: 200px clamp 하한 도달 전에 세로 스택으로 전환 ─── */
+@media (max-width: 900px) {
+  .student-dashboard-body {
+    flex-direction: column;
+  }
+
+  .student-menu-sidebar {
+    width: 100%;
+    min-height: auto;
+    position: static;
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 16px;
+    border-right: none;
+    border-bottom: 2px solid var(--hud-border-subtle);
+  }
+
+  /* 모바일에서 캐릭터 카드는 가로 배치 */
+  .sidebar-character-card {
+    flex-direction: row;
+    padding: 8px 12px;
+    gap: 12px;
+    flex: 0 0 auto;
+    align-items: center;
+  }
+
+  /* 모바일 사진: 고정 크기 (비례 불필요 — 가로 배치이므로) */
+  .sidebar-character-frame {
+    width: 64px;
+    aspect-ratio: 1 / 1;
+    flex-shrink: 0;
+  }
+
+  .sidebar-character-name {
+    font-size: 13px;
+  }
+
+  .sidebar-level-chip {
+    font-size: 11px;
+    padding: 3px 10px;
+  }
+
+  .sidebar-stats {
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: 6px;
+    flex: 1;
+  }
+
+  .sidebar-stat-row {
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+    padding: 6px 10px;
+    min-width: 64px;
+  }
+
+  .sidebar-stat-label {
+    font-size: 10px;
+  }
+
+  .sidebar-stat-value {
+    font-size: 14px;
+  }
+
+  .sidebar-divider {
+    display: none;
+  }
+
+  .sidebar-mypage-btn {
+    margin-top: 0;
+    flex: 0 0 auto;
+    white-space: nowrap;
+    font-size: 12px;
+  }
+
+  .student-dashboard-main {
+    padding: 16px;
+  }
+}
+
+/* =============================================
+   새 그리드 레이아웃 (사이드바 없는 중앙 정렬)
+   ============================================= */
+
+.sd-page {
+  flex: 1;
+  width: 100%;
+  max-width: 1080px;
+  margin: 0 auto;
+  padding: 28px 24px 40px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  box-sizing: border-box;
+}
+
+/* 상단 2열 그리드: 캐릭터 카드 | 오른쪽 컬럼 */
+.sd-top-grid {
+  display: grid;
+  grid-template-columns: 280px 1fr;
+  gap: 20px;
+  align-items: start;
+}
+
+/* ── 캐릭터 패널 ── */
+.sd-char-panel {
+  /* big-frame-glow 클래스와 함께 사용 */
+}
+
+.sd-char-inner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  padding: 20px 16px !important;
+}
+
+.sd-char-img-wrap {
+  position: relative;
+  width: 160px;
+  height: 160px;
+  border-radius: 14px;
+  border: 3px solid var(--hud-frame);
+  overflow: hidden;
+  box-shadow: 0 0 14px var(--hud-glow-soft);
+  background: transparent;
+  flex-shrink: 0;
+}
+
+.sd-char-lv-badge {
+  position: absolute;
+  bottom: 6px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(15, 23, 42, 0.72);
+  color: #e2e8f0;
+  font-size: 11px;
+  font-weight: 800;
+  padding: 2px 10px;
+  border-radius: 99px;
+  white-space: nowrap;
+  z-index: 1;
+}
+
+.sd-char-img {
+  width: 100%;
+  height: 100%;
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+  display: block;
+}
+
+.sd-char-panel.big-frame-glow {
+  width: 100%;
+  max-width: 280px;
+}
+
+.sd-char-name {
+  font-size: 16px;
+  font-weight: 800;
+  color: var(--hud-text);
+  text-align: center;
+  margin: 2px 0 0;
+}
+
+/* XP 진행바 */
+.sd-char-progress-track {
+  width: 100%;
+  height: 7px;
+  background: var(--hud-border-subtle);
+  border-radius: 99px;
+  overflow: hidden;
+  margin-top: 2px;
+}
+
+.sd-char-progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--hud-frame), var(--hud-frame-bright));
+  border-radius: 99px;
+  transition: width 0.4s ease;
+}
+
+.sd-char-xp-text {
+  font-size: 11px;
+  color: var(--hud-text-muted);
+  text-align: right;
+  width: 100%;
+  margin-top: -4px;
+}
+
+/* 통계 3열 */
+.sd-char-stats-row {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  width: 100%;
+  margin-top: 4px;
+}
+
+.sd-char-stat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 8px 4px;
+  background: var(--hud-surface-raised);
+  border: 1px solid var(--hud-border-subtle);
+  border-radius: 8px;
+}
+
+.sd-char-stat-val {
+  font-size: 17px;
+  font-weight: 800;
+  color: var(--hud-text);
+  line-height: 1.1;
+}
+
+.sd-char-stat--rank .sd-char-stat-val {
+  color: var(--hud-frame);
+}
+
+.sd-char-stat-lbl {
+  font-size: 10px;
+  color: var(--hud-text-muted);
+  font-weight: 600;
+}
+
+/* 뱃지 컬렉션 미니 */
+.sd-badge-section {
+  width: 100%;
+}
+
+.sd-badge-title-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--hud-text-muted);
+  margin-bottom: 6px;
+}
+
+.sd-badge-count {
+  font-weight: 800;
+  color: var(--hud-frame);
+}
+
+.sd-badge-icons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+}
+
+.sd-badge-icon {
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  border-radius: 6px;
+  background: var(--hud-surface-raised);
+  border: 1px solid var(--hud-border-subtle);
+}
+
+.sd-badge-icon--locked {
+  color: var(--hud-text-muted);
+  opacity: 0.4;
+  font-size: 18px;
+}
+
+.sd-badge-icon--more {
+  font-size: 11px;
+  font-weight: 800;
+  color: var(--hud-frame);
+}
+
+/* ── 오른쪽 컬럼 — 창 높이는 그대로, 사이 여백만 분배 (높이는 JS로 왼쪽 패널에 맞춤) */
+.sd-right-col {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 0;
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+.sd-right-col > .big-frame-glow {
+  flex: 0 0 auto;
+  margin-bottom: 0;
+}
+
+/* 문제 만들기 버튼 그룹 */
+.sd-make-btns {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 0;
+}
+
+.sd-make-btns .btn {
+  width: 100%;
+}
+
+/* 홈 카드 — 제목 → 설명 세로 배치 */
+.sd-home-card-head {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.sd-home-card-head__title {
+  margin-bottom: 0;
+}
+
+.sd-home-card-head__desc {
+  margin: 0;
+  font-size: 14px;
+  color: var(--hud-text-muted);
+  text-align: left;
+  line-height: 1.5;
+}
+
+/* 문제 만들기 — 1순위 강조 카드 */
+.sd-home-make-frame .big-frame {
+  padding: 1.75rem;
+}
+
+.sd-home-primary-btn {
+  width: 100%;
+  padding: 16px 20px;
+  font-size: 20px;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+/* 2순위 CTA — 채점결과·오답노트, 학급 문제 풀기 */
+.sd-home-secondary-btn {
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 1.25;
+}
+
+.sd-home-make-frame .sd-home-text-link {
+  margin-top: 10px;
+}
+
+/* 오답노트 — 텍스트 + 버튼(20px 간격) */
+.sd-home-wrong-note-layout {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+.sd-home-wrong-note-layout__left {
+  flex: 0 0 auto;
+  min-width: 0;
+}
+
+.sd-home-wrong-note-layout__title {
+  margin-bottom: 0;
+  white-space: nowrap;
+}
+
+.sd-home-wrong-note-btn {
+  flex: 0 0 auto;
+  width: auto;
+  padding: 11px 14px;
+  white-space: nowrap;
+  border-radius: var(--radius-md);
+}
+
+.sd-home-wrong-note-btn svg {
+  width: 15px;
+  height: 15px;
+}
+
+.sd-home-wrong-note-layout__foot {
+  margin: 6px 0 0;
+  font-size: 14px;
+  color: var(--hud-text-muted);
+  line-height: 1.45;
+}
+
+.sd-home-wrong-note-alert-msg {
+  font-weight: 700;
+  color: #b91c1c;
+}
+
+@media (max-width: 480px) {
+  .sd-home-wrong-note-layout {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+  }
+
+  .sd-home-wrong-note-btn {
+    width: 100%;
+  }
+}
+
+/* 우리 반 랭킹 헤더 + 내 문제 저장소(3순위) */
+.sd-home-ranking-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 12px;
+}
+
+.sd-home-ranking-head__title {
+  margin-bottom: 0;
+}
+
+/* 내 문제 저장소 — 테두리 없는 보조 링크 */
+.sd-home-text-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  width: 100%;
+  margin-top: 2px;
+  padding: 6px 8px;
+  border: none;
+  background: transparent;
+  color: #64748b;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: color 0.15s;
+}
+
+.sd-home-text-link--inline {
+  width: auto;
+  margin-top: 0;
+  padding: 4px 0;
+  font-size: 13px;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.sd-home-text-link:hover {
+  color: #334155;
+}
+
+/* 학급 문제 은행 — 파란 outline 버튼 */
+.sd-class-solve-btn {
+  width: 100%;
+  padding: 11px 14px;
+  background: #ffffff;
+  color: var(--primary);
+  border-color: var(--primary);
+}
+
+.sd-class-solve-btn:hover:not(:disabled) {
+  background: #eef2ff;
+  border-color: var(--primary-dark);
+  color: var(--primary-dark);
+}
+
+/* 오답노트 미제출·반려 — 붉은 강조 프레임 */
+.sd-home-frame--alert.big-frame-glow {
+  filter:
+    drop-shadow(0 0 3px rgba(239, 68, 68, 0.45))
+    drop-shadow(0 0 10px rgba(239, 68, 68, 0.3))
+    drop-shadow(0 0 22px rgba(220, 38, 38, 0.18));
+}
+
+.sd-home-frame--alert .big-frame::before {
+  background: #f87171;
+}
+
+.sd-home-frame--alert .big-frame::after {
+  background: #fef2f2;
+}
+
+.sd-home-frame--alert .section-title {
+  color: #b91c1c;
+}
+
+.sd-home-frame--alert .sd-home-card-head__desc {
+  color: #991b1b;
+}
+
+/* Phosphor 아이콘 — 타이틀·버튼 정렬 (Tailwind 유틸 대응) */
+.dashboard-container .section-title,
+.sd-page .section-title {
+  display: flex;
+  align-items: center;
+}
+
+.dashboard-container .inline-block,
+.sd-page .inline-block,
+.quiz-container .inline-block,
+.result-container .inline-block {
+  display: inline-block;
+  flex-shrink: 0;
+}
+
+.dashboard-container .mr-1,
+.sd-page .mr-1,
+.quiz-container .mr-1,
+.result-container .mr-1 {
+  margin-right: 4px;
+  flex-shrink: 0;
+}
+
+.dashboard-container .mr-1\.5,
+.sd-page .mr-1\.5,
+.quiz-container .mr-1\.5,
+.result-container .mr-1\.5 {
+  margin-right: 6px;
+  flex-shrink: 0;
+}
+
+.dashboard-container .mr-2,
+.sd-page .mr-2,
+.quiz-container .mr-2,
+.result-container .mr-2 {
+  margin-right: 8px;
+  flex-shrink: 0;
+}
+
+.sd-header-greeting {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.sd-result-saved-note {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  color: #9ca3af;
+  margin-top: 8px;
+}
+
+/* ── 하단 AI 섹션: 단원/난이도 2열 ── */
+.sd-ai-selectors {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+  align-items: start;
+  margin-top: 4px;
+}
+
+/* 반응형 */
+@media (max-width: 860px) {
+  .sd-top-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .sd-char-panel {
+    max-width: 400px;
+    margin: 0 auto;
+    width: 100%;
+  }
+
+  .sd-right-col {
+    height: auto !important;
+    justify-content: flex-start;
+    gap: 20px;
+  }
+
+  .sd-right-col > .big-frame-glow {
+    margin-bottom: 24px;
+  }
+
+  .sd-char-img-wrap {
+    width: 120px;
+    height: 120px;
+  }
+
+  .sd-ai-selectors {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 600px) {
+  .sd-page {
+    padding: 16px 12px 28px;
+  }
+}

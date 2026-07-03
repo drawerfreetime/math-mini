@@ -1,0 +1,400 @@
+/* 뱃지 획득 축하 모달 — 등급별 테마 */
+
+.badge-celeb-root {
+  position: fixed;
+  inset: 0;
+  z-index: 2000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background: rgba(15, 23, 42, 0.55);
+  box-sizing: border-box;
+  animation: badge-celeb-fade-in 0.25s ease;
+}
+
+@keyframes badge-celeb-fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.badge-celeb-panel {
+  position: relative;
+  width: 100%;
+  max-width: 420px;
+  border-radius: 20px;
+  border: 3px solid;
+  overflow: hidden;
+}
+
+@keyframes badge-celeb-pop {
+  from {
+    transform: scale(0.92);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+/* 초보: 나무 톤 */
+.badge-celeb-tier--novice {
+  background: linear-gradient(165deg, #e8d4b8 0%, #c9a66b 42%, #8b6914 100%);
+  border-color: #5c3d0f;
+  color: #2d1f0a;
+  box-shadow:
+    0 24px 48px rgba(0, 0, 0, 0.18),
+    inset 0 1px 0 rgba(255, 255, 255, 0.35);
+  animation:
+    badge-celeb-pop 0.4s cubic-bezier(0.34, 1.4, 0.64, 1),
+    badge-celeb-wood-glow 3s ease-in-out infinite 0.45s;
+}
+
+@keyframes badge-celeb-wood-glow {
+  0%,
+  100% {
+    filter: brightness(1) saturate(1);
+  }
+  50% {
+    filter: brightness(1.05) saturate(1.06);
+  }
+}
+
+.badge-celeb-tier--novice .badge-celeb-bubble {
+  background: rgba(255, 252, 245, 0.92);
+  border-color: rgba(92, 61, 15, 0.35);
+}
+
+.badge-celeb-tier--novice .badge-celeb-btn {
+  background: linear-gradient(180deg, #a67c52 0%, #6b4423 100%);
+  border: 2px solid #4a2f18;
+  color: #fffaf0;
+}
+
+/* 참된: 철·은빛 메탈 */
+.badge-celeb-tier--adept {
+  background: linear-gradient(155deg, #e2e8f0 0%, #94a3b8 45%, #475569 100%);
+  border-color: #334155;
+  color: #0f172a;
+  box-shadow:
+    0 24px 48px rgba(0, 0, 0, 0.25),
+    inset 0 2px 0 rgba(255, 255, 255, 0.5);
+  animation:
+    badge-celeb-pop 0.4s cubic-bezier(0.34, 1.4, 0.64, 1),
+    badge-celeb-steel-glint 2.6s ease-in-out infinite 0.45s;
+}
+
+@keyframes badge-celeb-steel-glint {
+  0%,
+  100% {
+    filter: brightness(1);
+    box-shadow:
+      0 24px 48px rgba(0, 0, 0, 0.25),
+      inset 0 2px 0 rgba(255, 255, 255, 0.5);
+  }
+  50% {
+    filter: brightness(1.08);
+    box-shadow:
+      0 26px 52px rgba(30, 41, 59, 0.35),
+      inset 0 2px 0 rgba(255, 255, 255, 0.65);
+  }
+}
+
+.badge-celeb-tier--adept .badge-celeb-bubble {
+  background: rgba(248, 250, 252, 0.95);
+  border-color: rgba(51, 65, 85, 0.45);
+}
+
+.badge-celeb-tier--adept .badge-celeb-btn {
+  background: linear-gradient(180deg, #64748b 0%, #334155 100%);
+  border: 2px solid #1e293b;
+  color: #f8fafc;
+}
+
+.badge-celeb-tier--adept .badge-celeb-mascot-face {
+  background: linear-gradient(180deg, #cbd5e1 0%, #94a3b8 100%);
+  border-color: #475569;
+}
+
+/* 전설: 황금 + 반짝 */
+.badge-celeb-tier--legendary {
+  background: linear-gradient(145deg, #fef08a 0%, #facc15 32%, #d97706 72%, #92400e 100%);
+  border-color: #d97706;
+  color: #422006;
+  box-shadow:
+    0 0 0 2px rgba(250, 204, 21, 0.6),
+    0 24px 56px rgba(146, 64, 14, 0.45),
+    inset 0 2px 0 rgba(255, 255, 255, 0.45);
+  animation:
+    badge-celeb-pop 0.4s cubic-bezier(0.34, 1.4, 0.64, 1),
+    badge-celeb-gold-shimmer 2.2s ease-in-out infinite 0.5s;
+}
+
+@keyframes badge-celeb-gold-shimmer {
+  0%,
+  100% {
+    filter: brightness(1) saturate(1);
+    box-shadow:
+      0 0 0 2px rgba(250, 204, 21, 0.55),
+      0 24px 56px rgba(146, 64, 14, 0.45),
+      inset 0 2px 0 rgba(255, 255, 255, 0.45);
+  }
+  50% {
+    filter: brightness(1.08) saturate(1.15);
+    box-shadow:
+      0 0 0 3px rgba(253, 224, 71, 0.85),
+      0 28px 60px rgba(180, 83, 9, 0.55),
+      inset 0 2px 0 rgba(255, 255, 255, 0.6);
+  }
+}
+
+.badge-celeb-tier--legendary .badge-celeb-bubble {
+  background: rgba(255, 251, 235, 0.96);
+  border-color: rgba(180, 83, 9, 0.5);
+}
+
+.badge-celeb-tier--legendary .badge-celeb-btn {
+  background: linear-gradient(180deg, #facc15 0%, #ca8a04 100%);
+  border: 2px solid #b45309;
+  color: #431407;
+  font-weight: 800;
+}
+
+.badge-celeb-tier--legendary .badge-celeb-mascot-face {
+  background: linear-gradient(180deg, #fde68a 0%, #fbbf24 100%);
+  border-color: #b45309;
+}
+
+/* 전설 전용 반짝이 */
+.badge-celeb-sparkles {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.badge-celeb-spark {
+  position: absolute;
+  color: rgba(255, 255, 255, 0.95);
+  text-shadow: 0 0 8px #fbbf24;
+  font-size: 1.25rem;
+  animation: badge-celeb-twinkle 1.4s ease-in-out infinite;
+}
+
+.badge-celeb-spark--1 {
+  top: 12%;
+  left: 8%;
+  animation-delay: 0s;
+}
+.badge-celeb-spark--2 {
+  top: 18%;
+  right: 12%;
+  animation-delay: 0.25s;
+}
+.badge-celeb-spark--3 {
+  top: 42%;
+  left: 4%;
+  animation-delay: 0.5s;
+}
+.badge-celeb-spark--4 {
+  bottom: 28%;
+  right: 8%;
+  animation-delay: 0.15s;
+}
+.badge-celeb-spark--5 {
+  top: 8%;
+  right: 28%;
+  animation-delay: 0.4s;
+}
+.badge-celeb-spark--6 {
+  bottom: 14%;
+  left: 18%;
+  animation-delay: 0.55s;
+}
+
+@keyframes badge-celeb-twinkle {
+  0%,
+  100% {
+    opacity: 0.35;
+    transform: scale(0.85) rotate(0deg);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.15) rotate(15deg);
+  }
+}
+
+.badge-celeb-inner {
+  position: relative;
+  z-index: 1;
+  padding: 24px 22px 22px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+.badge-celeb-kicker {
+  margin: 0 0 12px;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  opacity: 0.85;
+}
+
+/* 간단 수사봇 마스코트 */
+.badge-celeb-mascot {
+  position: relative;
+  width: 72px;
+  height: 72px;
+  margin-bottom: 14px;
+}
+
+.badge-celeb-mascot-antenna {
+  position: absolute;
+  top: -2px;
+  left: 50%;
+  width: 3px;
+  height: 14px;
+  margin-left: -1.5px;
+  background: #374151;
+  border-radius: 2px;
+}
+
+.badge-celeb-mascot-antenna::after {
+  content: '';
+  position: absolute;
+  top: -5px;
+  left: 50%;
+  width: 10px;
+  height: 10px;
+  margin-left: -5px;
+  border-radius: 50%;
+  background: #ef4444;
+  box-shadow: 0 0 6px #f87171;
+}
+
+.badge-celeb-mascot-face {
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  width: 56px;
+  height: 52px;
+  margin-left: -28px;
+  border-radius: 14px;
+  border: 3px solid #1e293b;
+  background: linear-gradient(180deg, #e5e7eb 0%, #9ca3af 100%);
+  box-shadow: inset 0 -4px 0 rgba(0, 0, 0, 0.12);
+}
+
+.badge-celeb-mascot-eye {
+  position: absolute;
+  top: 16px;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #0f172a;
+  animation: badge-celeb-blink 3.6s infinite;
+}
+
+.badge-celeb-mascot-eye--l {
+  left: 11px;
+}
+.badge-celeb-mascot-eye--r {
+  right: 11px;
+}
+
+@keyframes badge-celeb-blink {
+  0%,
+  48%,
+  52%,
+  100% {
+    transform: scaleY(1);
+  }
+  50% {
+    transform: scaleY(0.15);
+  }
+}
+
+.badge-celeb-mascot-mouth {
+  position: absolute;
+  bottom: 12px;
+  left: 50%;
+  width: 20px;
+  height: 10px;
+  margin-left: -10px;
+  border: 2px solid #1e293b;
+  border-top: none;
+  border-radius: 0 0 20px 20px;
+  background: rgba(255, 255, 255, 0.5);
+}
+
+.badge-celeb-mascot-badge {
+  position: absolute;
+  right: -4px;
+  bottom: 6px;
+  font-size: 22px;
+  filter: drop-shadow(0 2px 2px rgba(0, 0, 0, 0.2));
+}
+
+.badge-celeb-bubble {
+  width: 100%;
+  padding: 14px 16px 16px;
+  border-radius: 14px;
+  border: 2px solid;
+  margin-bottom: 18px;
+  box-sizing: border-box;
+}
+
+.badge-celeb-msg {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 800;
+  line-height: 1.5;
+  letter-spacing: -0.02em;
+}
+
+.badge-celeb-sub {
+  margin: 10px 0 0;
+  font-size: 12.5px;
+  font-weight: 600;
+  line-height: 1.45;
+  color: #4b5563;
+}
+
+.badge-celeb-tier--novice .badge-celeb-sub,
+.badge-celeb-tier--legendary .badge-celeb-sub {
+  color: rgba(45, 31, 10, 0.85);
+}
+
+.badge-celeb-tier--adept .badge-celeb-sub {
+  color: #334155;
+}
+
+.badge-celeb-btn {
+  min-width: 160px;
+  padding: 12px 28px;
+  font-size: 16px;
+  font-weight: 800;
+  border-radius: 12px;
+  cursor: pointer;
+  transition:
+    transform 0.12s ease,
+    filter 0.12s ease;
+}
+
+.badge-celeb-btn:hover {
+  transform: translateY(-1px);
+  filter: brightness(1.05);
+}
+
+.badge-celeb-btn:focus {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.4);
+}

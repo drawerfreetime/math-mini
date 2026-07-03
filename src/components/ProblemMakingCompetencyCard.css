@@ -1,0 +1,133 @@
+.pmc-card {
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 16px 18px;
+  margin-bottom: 16px;
+}
+
+.pmc-card--compact {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px 20px;
+  font-size: 13px;
+  color: #374151;
+  padding: 10px 14px;
+}
+
+.pmc-card__title {
+  margin: 0 0 4px;
+  font-size: 1.05rem;
+  color: #111827;
+}
+
+.pmc-card__desc {
+  margin: 0 0 14px;
+  font-size: 12px;
+  color: #6b7280;
+}
+
+.pmc-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 12px;
+}
+
+.pmc-metric {
+  background: #f9fafb;
+  border-radius: 8px;
+  padding: 10px 12px;
+}
+
+.pmc-metric__label {
+  font-size: 12px;
+  color: #6b7280;
+}
+
+.pmc-metric__value {
+  font-size: 1.35rem;
+  font-weight: 700;
+  color: #4f46e5;
+  margin-top: 2px;
+}
+
+.pmc-metric__hint {
+  font-size: 11px;
+  color: #9ca3af;
+  margin-top: 4px;
+}
+
+.pmc-strategies {
+  margin-top: 14px;
+  padding-top: 12px;
+  border-top: 1px dashed #e5e7eb;
+}
+
+.pmc-strategies__title {
+  font-size: 12px;
+  color: #6b7280;
+  margin-bottom: 6px;
+}
+
+.pmc-strategies__list {
+  margin: 0;
+  padding-left: 1.2rem;
+  font-size: 13px;
+  color: #374151;
+}
+
+.pmc-card__foot {
+  margin: 12px 0 0;
+  font-size: 12px;
+  color: #6b7280;
+}
+
+.pmc-teacher-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+  margin-top: 12px;
+}
+
+.pmc-teacher-table th,
+.pmc-teacher-table td {
+  border: 1px solid #e5e7eb;
+  padding: 8px 10px;
+  text-align: center;
+}
+
+.pmc-teacher-table th {
+  background: #f3f4f6;
+  font-weight: 600;
+}
+
+.pmc-teacher-table td:first-child {
+  text-align: left;
+}
+
+.pmc-subtabs {
+  display: flex;
+  gap: 4px;
+  margin: 0 0 16px;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.pmc-subtabs__btn {
+  padding: 6px 14px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 400;
+  color: #6b7280;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+  border-radius: 4px 4px 0 0;
+  transition: color 0.15s;
+}
+
+.pmc-subtabs__btn--active {
+  font-weight: 700;
+  color: #4f46e5;
+  border-bottom-color: #4f46e5;
+}

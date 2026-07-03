@@ -1,0 +1,45 @@
+---
+description: 개인정보 보호 및 데이터 처리 원칙 (Privacy by Design)
+alwaysApply: true
+---
+
+# 개인정보 보호 및 데이터 처리 규칙
+
+## 절대 규칙 — 외부 API 전송 금지
+
+학생 개인정보(실명, 학번, PIN)는 **절대 외부 API로 전송하지 않는다.**
+AI 기능(문제 생성 등)에는 비식별화된 수치·도형 데이터만 사용한다.
+
+```js
+// ✅ GOOD — 비식별 수치만 전송
+const payload = { shapeType: 'rect', width: 4, height: 3 };
+
+// ❌ BAD — 학생 정보 포함 절대 금지
+const payload = { studentName: '홍길동', answer: '12' };
+```
+
+## 데이터 저장 위치
+
+| 데이터 종류 | 저장 위치 | 비고 |
+|------------|----------|------|
+| 학생 실명 | 교사 기기 IndexedDB | 서버 전송 금지 |
+| UUID, nameHash, pinHash | Firebase Firestore | 실명 절대 포함 금지 |
+| 학생 세션(uuid, classCode) | 학생 기기 localStorage | |
+| 문제 수치·좌표 | Firebase Firestore | 비식별 데이터만 |
+
+## 해싱 규칙
+
+실명·PIN은 반드시 SHA-256으로 해싱 후 저장한다:
+
+```js
+// utils/crypto.js 함수 사용
+const nameHash = await hashStudentName(realName, classCode);
+const pinHash  = await hashPIN(pin, classCode);
+// → Firebase에는 nameHash, pinHash만 저장
+```
+
+## 수학 정확성
+
+- 넓이, 부피, 각도 등 수치는 부동소수점 오차 방지를 위해
+  `Math.round(value * 1000) / 1000` 으로 처리한다
+- 격자 기반 계산에서 픽셀 변환은 항상 단방향(JSON → 픽셀)으로 수행한다
