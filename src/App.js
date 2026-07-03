@@ -349,7 +349,7 @@ function AppRoutes() {
 export default function App() {
   return (
     <FirebaseEnvGuard>
-      <Router>
+      <Router basename={process.env.PUBLIC_URL}>
         <AuthProvider>
           <div className="app-shell">
             <main className="app-main" id="main-content">

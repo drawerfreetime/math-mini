@@ -36,10 +36,12 @@
     "admin:backfill-exploration-points": "node scripts/admin-backfill-exploration-points.mjs",
     "admin:backfill-exploration-client": "node scripts/run-exploration-backfill-client.mjs",
     "admin:backfill-exploration-cli": "node scripts/run-exploration-backfill-cli.mjs",
-    "admin:backfill-exploration-points:cli": "node scripts/admin-backfill-exploration-points.mjs --use-cli-auth"
+    "admin:backfill-exploration-points:cli": "node scripts/admin-backfill-exploration-points.mjs --use-cli-auth",
+    "deploy:github": "gh-pages -d build --repo https://github.com/drawerfreetime/math-mini.git"
   },
   "devDependencies": {
-    "firebase-admin": "^12.7.0"
+    "firebase-admin": "^12.7.0",
+    "gh-pages": "^6.3.0"
   },
   "eslintConfig": {
     "extends": [

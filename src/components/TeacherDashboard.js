@@ -2326,14 +2326,11 @@ export default function TeacherDashboard() {
                 padding: '2px 8px', borderRadius: 6, fontSize: 13, color: '#4f46e5' }}>
                 학급코드: {classCode}
               </span>
-              </button>
-            </p>
             </p>
           </div>
         </div>
         <div className="header-right">
           <span className="user-badge teacher-badge">교사</span>
-          <span className="user-name" style={{ fontSize: 13 }}>{teacherUser?.email}</span>
           <span className="user-name" style={{ fontSize: 13 }}>{teacherUser?.email}</span>
           <button className="btn btn-outline btn-sm"
             onClick={() => { teacherLogout(); navigate('/'); }}>
