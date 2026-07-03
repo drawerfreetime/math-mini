@@ -1,33 +1,3 @@
-# math-mini — 프론트엔드 전용 (math-app0623 에서 분리)
-
-초등학교 AI 수학 학습 웹앱의 **프론트엔드만** 포함한 버전입니다.  
-로컬 Python 백엔드(`backend/`)는 없으며, OCR·스캔정리·AI 검토 등 API는 `.env`의 `REACT_APP_API_BASE`로 원격 서버에 연결합니다.
-
-## 빠른 시작
-
-1. Node.js LTS 설치
-2. `.env.example`을 복사해 `.env` 작성 (Firebase·Claude·API URL)
-3. 터미널에서 `math-mini` 폴더로 이동 후:
-
-```
-npm install
-npm start
-```
-
-4. 브라우저에서 `http://localhost:3000` 열림
-
-> **참고:** `math-app0623`의 `.env`가 있다면 같은 내용을 `math-mini/.env`에 복사하면 됩니다.
-
-## math-app0623 과의 차이
-
-| 항목 | math-app0623 | math-mini |
-|------|--------------|-----------|
-| 프론트엔드 (`src/`, `public/`) | ✅ | ✅ |
-| 로컬 백엔드 (`backend/`) | ✅ | ❌ |
-| 개발 프록시 | Python + Claude | Claude만 |
-| API 호출 | 로컬 또는 원격 | 원격 (`REACT_APP_API_BASE`) |
-
----
 
 # 🧮 수학 문제 만들기 - 설치 및 실행 가이드
 
